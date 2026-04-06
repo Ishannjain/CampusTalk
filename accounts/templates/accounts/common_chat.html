@@ -1,0 +1,45 @@
+{% extends "accounts/layout.html" %}
+{% block body %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Common Campus Chat</h4>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">This is the shared community chat. Everyone can read and post here.</p>
+                    <div class="mb-4">
+                        {% if messages %}
+                            <div class="list-group">
+                                {% for message in messages %}
+                                    <div class="list-group-item">
+                                        <div class="d-flex justify-content-between">
+                                            <strong>{{ message.sender.username }}</strong>
+                                            <small class="text-muted">{{ message.created_at|date:'M d, Y H:i' }}</small>
+                                        </div>
+                                        <p class="mb-0">{{ message.message|linebreaksbr }}</p>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="text-muted">No messages yet. Send the first one!</p>
+                        {% endif %}
+                    </div>
+
+                    <form method="post" action="{% url 'common_chat' %}">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            {{ form.message }}
+                        </div>
+                        <button class="btn btn-primary">Send to Common Chat</button>
+                    </form>
+                </div>
+                <div class="card-footer text-end">
+                    <a href="{% url 'index' %}" class="btn btn-outline-secondary">Back to Home</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
