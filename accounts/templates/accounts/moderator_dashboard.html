@@ -44,8 +44,83 @@
         </div>
     </div>
 
-    <!-- Pending Reports -->
-    <div class="card">
+    <!-- Tab Navigation -->
+    <ul class="nav nav-tabs mb-4" role="tablist">
+        <li class="nav-item">
+            <a class="nav-link active" id="promote-tab" data-toggle="tab" href="#promote" role="tab">Promote Users</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="reports-tab" data-toggle="tab" href="#reports" role="tab">Pending Reports</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="history-tab" data-toggle="tab" href="#history" role="tab">Review History</a>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+        <!-- Promote Users Tab -->
+        <div class="tab-pane fade show active" id="promote" role="tabpanel">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Promote Users to Moderator</h5>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Username</th>
+                                <th>Current Role</th>
+                                <th>Verified</th>
+                                <th>Joined</th>
+                                <th>Posts</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for student in students_list %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'user_profile' student.username %}">
+                                        {{ student.username }}
+                                    </a>
+                                </td>
+                                <td>
+                                    <span class="badge badge-secondary">{{ student.get_role_display }}</span>
+                                </td>
+                                <td>
+                                    {% if student.is_verified %}
+                                    <span class="badge badge-success">✓ Verified</span>
+                                    {% else %}
+                                    <span class="badge badge-danger">✗ Not Verified</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ student.date_joined|date:"M d, Y" }}</td>
+                                <td>{{ student.posts_count }}</td>
+                                <td>
+                                    <form method="post" action="{% url 'promote_user' student.id %}" style="display: inline;">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="role" value="moderator">
+                                        <button type="submit" class="btn btn-warning btn-sm" title="Promote to Moderator" onclick="return confirm('Promote {{ student.username }} to Moderator?')">
+                                            Promote to Moderator
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">
+                                    No students available for promotion
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pending Reports Tab -->
+        <div class="tab-pane fade" id="reports" role="tabpanel">
         <div class="card-header">
             <h5 class="mb-0">Pending Reports ({{ report_stats.pending }})</h5>
         </div>
@@ -118,15 +193,17 @@
             </div>
             {% endif %}
         </div>
-    </div>
 
-    <!-- Review History -->
-    <div class="card mt-4">
-        <div class="card-header">
-            <h5 class="mb-0">Review History</h5>
-        </div>
-        <div class="card-body">
-            <p class="text-muted">Recent moderation activity appears here.</p>
+        <!-- Review History Tab -->
+        <div class="tab-pane fade" id="history" role="tabpanel">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Review History</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Recent moderation activity appears here.</p>
+                </div>
+            </div>
         </div>
     </div>
 </div>

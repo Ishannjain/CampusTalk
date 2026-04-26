@@ -4,7 +4,8 @@ from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.db.models import Q
+from django.db import models
+from django.db.models import Q, Count
 from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -44,8 +45,14 @@ def index(request):
         post_form = PostForm()
         comment_form = CommentForm()
 
+        # Separate posts by author role
+        staff_posts = posts.filter(author__role__in=['admin', 'moderator'])
+        student_posts = posts.filter(author__role='student')
+
         return render(request, 'accounts/index.html', {
             'posts': posts,
+            'staff_posts': staff_posts,
+            'student_posts': student_posts,
             'common_chat_preview': reversed(common_chat_preview),
             'other_users': other_users,
             'post_form': post_form,
@@ -248,9 +255,15 @@ def moderator_dashboard(request):
         'resolved': ContentReport.objects.filter(status='resolved').count(),
     }
     
+    # Get students list with post count for promotion (only admins can promote to admin)
+    students_list = User.objects.filter(role='student').annotate(
+        posts_count=Count('posts')
+    ).order_by('-date_joined')
+    
     return render(request, 'accounts/moderator_dashboard.html', {
         'pending_reports': pending_reports,
         'report_stats': report_stats,
+        'students_list': students_list,
     })
 
 
@@ -328,11 +341,17 @@ def admin_panel(request):
     recent_reports = ContentReport.objects.all().order_by('-created_at')[:10]
     staff_list = User.objects.filter(role__in=['moderator', 'admin']).order_by('role', 'username')
     
+    # Get students list with post count for promotion
+    students_list = User.objects.filter(role='student').annotate(
+        posts_count=Count('posts')
+    ).order_by('-date_joined')
+    
     return render(request, 'accounts/admin_panel.html', {
         'user_stats': user_stats,
         'report_stats': report_stats,
         'recent_reports': recent_reports,
         'staff_list': staff_list,
+        'students_list': students_list,
     })
 
 

@@ -35,77 +35,171 @@
             </div>
         </div>
 
-        <div class="row">
-            <div class="col-lg-8">
+        <!-- Tab Navigation for Posts and Chat -->
+        <ul class="nav nav-tabs mb-4" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link active" id="staff-posts-tab" data-toggle="tab" href="#staff-posts" role="tab">
+                    📢 Staff Posts <span class="badge badge-primary">{{ staff_posts|length }}</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="student-posts-tab" data-toggle="tab" href="#student-posts" role="tab">
+                    🎓 Student Posts <span class="badge badge-info">{{ student_posts|length }}</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="common-chat-tab" data-toggle="tab" href="#common-chat" role="tab">
+                    💬 Common Chat
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="personal-chat-tab" data-toggle="tab" href="#personal-chat" role="tab">
+                    👤 Personal Chat
+                </a>
+            </li>
+        </ul>
+
+        <div class="tab-content">
+            <!-- Staff Posts Tab -->
+            <div class="tab-pane fade show active" id="staff-posts" role="tabpanel">
                 <div class="card mb-4">
-                    <div class="card-header">
-                        <h5 class="mb-0">Create a Common Post</h5>
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">📢 Posts from Admin & Moderators</h5>
                     </div>
                     <div class="card-body">
-                        <form method="post" action="{% url 'create_post' %}">
-                            {% csrf_token %}
-                            {{ post_form.non_field_errors }}
-                            <div class="mb-3">
-                                {{ post_form.title.label_tag }}
-                                {{ post_form.title }}
-                            </div>
-                            <div class="mb-3">
-                                {{ post_form.body.label_tag }}
-                                {{ post_form.body }}
-                            </div>
-                            <button class="btn btn-primary">Post to Common Feed</button>
-                        </form>
-                    </div>
-                </div>
+                        {% for post in staff_posts %}
+                            <div class="card mb-3 border-primary">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <div>
+                                            <h5 class="card-title mb-1">{{ post.title|default:'Campus Update' }}</h5>
+                                            <p class="text-muted mb-0">
+                                                Posted by 
+                                                {% if post.author.role == 'admin' %}
+                                                    <span class="badge badge-danger">{{ post.author.username }} (Admin)</span>
+                                                {% else %}
+                                                    <span class="badge badge-warning">{{ post.author.username }} (Moderator)</span>
+                                                {% endif %}
+                                                • {{ post.created_at|date:'M d, Y H:i' }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <p class="card-text">{{ post.body|linebreaksbr }}</p>
 
-                {% for post in posts %}
-                    <div class="card mb-3">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-start mb-2">
-                                <div>
-                                    <h5 class="card-title mb-1">{{ post.title|default:'Campus Update' }}</h5>
-                                    <p class="text-muted mb-0">Posted by {{ post.author.username }} • {{ post.created_at|date:'M d, Y H:i' }}</p>
+                                    <div class="mt-3">
+                                        <strong>Comments ({{ post.comments.count }})</strong>
+                                        {% if post.comments.exists %}
+                                            <ul class="list-group list-group-flush mt-2">
+                                                {% for comment in post.comments.all %}
+                                                    <li class="list-group-item py-2">
+                                                        <strong>{{ comment.author.username }}</strong>
+                                                        <small class="text-muted">• {{ comment.created_at|date:'M d, Y H:i' }}</small>
+                                                        <div>{{ comment.text|linebreaksbr }}</div>
+                                                    </li>
+                                                {% endfor %}
+                                            </ul>
+                                        {% else %}
+                                            <p class="text-muted small mt-2">No comments yet.</p>
+                                        {% endif %}
+                                    </div>
+
+                                    <div class="mt-3">
+                                        <form method="post" action="{% url 'add_comment' post.id %}">
+                                            {% csrf_token %}
+                                            <div class="mb-2">
+                                                {{ comment_form.text }}
+                                            </div>
+                                            <button class="btn btn-sm btn-outline-primary">Add Comment</button>
+                                        </form>
+                                    </div>
                                 </div>
                             </div>
-                            <p class="card-text">{{ post.body|linebreaksbr }}</p>
+                        {% empty %}
+                            <div class="alert alert-info">No posts from staff yet.</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
 
-                            <div class="mt-3">
-                                <strong>Comments ({{ post.comments.count }})</strong>
-                                {% if post.comments.exists %}
-                                    <ul class="list-group list-group-flush mt-2">
-                                        {% for comment in post.comments.all %}
-                                            <li class="list-group-item py-2">
-                                                <strong>{{ comment.author.username }}</strong>
-                                                <small class="text-muted">• {{ comment.created_at|date:'M d, Y H:i' }}</small>
-                                                <div>{{ comment.text|linebreaksbr }}</div>
-                                            </li>
-                                        {% endfor %}
-                                    </ul>
-                                {% else %}
-                                    <p class="text-muted small mt-2">No comments yet. Be the first to reply.</p>
-                                {% endif %}
+            <!-- Student Posts Tab -->
+            <div class="tab-pane fade" id="student-posts" role="tabpanel">
+                <div class="card mb-4">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0">🎓 Student Posts</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0">Create a Post</h5>
                             </div>
-
-                            <div class="mt-3">
-                                <form method="post" action="{% url 'add_comment' post.id %}">
+                            <div class="card-body">
+                                <form method="post" action="{% url 'create_post' %}">
                                     {% csrf_token %}
-                                    <div class="mb-2">
-                                        {{ comment_form.text }}
+                                    {{ post_form.non_field_errors }}
+                                    <div class="mb-3">
+                                        {{ post_form.title.label_tag }}
+                                        {{ post_form.title }}
                                     </div>
-                                    <button class="btn btn-sm btn-outline-primary">Add Comment</button>
+                                    <div class="mb-3">
+                                        {{ post_form.body.label_tag }}
+                                        {{ post_form.body }}
+                                    </div>
+                                    <button class="btn btn-primary">Post to Feed</button>
                                 </form>
                             </div>
                         </div>
+
+                        {% for post in student_posts %}
+                            <div class="card mb-3 border-info">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <div>
+                                            <h5 class="card-title mb-1">{{ post.title|default:'Campus Update' }}</h5>
+                                            <p class="text-muted mb-0">Posted by {{ post.author.username }} • {{ post.created_at|date:'M d, Y H:i' }}</p>
+                                        </div>
+                                    </div>
+                                    <p class="card-text">{{ post.body|linebreaksbr }}</p>
+
+                                    <div class="mt-3">
+                                        <strong>Comments ({{ post.comments.count }})</strong>
+                                        {% if post.comments.exists %}
+                                            <ul class="list-group list-group-flush mt-2">
+                                                {% for comment in post.comments.all %}
+                                                    <li class="list-group-item py-2">
+                                                        <strong>{{ comment.author.username }}</strong>
+                                                        <small class="text-muted">• {{ comment.created_at|date:'M d, Y H:i' }}</small>
+                                                        <div>{{ comment.text|linebreaksbr }}</div>
+                                                    </li>
+                                                {% endfor %}
+                                            </ul>
+                                        {% else %}
+                                            <p class="text-muted small mt-2">No comments yet. Be the first to reply.</p>
+                                        {% endif %}
+                                    </div>
+
+                                    <div class="mt-3">
+                                        <form method="post" action="{% url 'add_comment' post.id %}">
+                                            {% csrf_token %}
+                                            <div class="mb-2">
+                                                {{ comment_form.text }}
+                                            </div>
+                                            <button class="btn btn-sm btn-outline-primary">Add Comment</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        {% empty %}
+                            <div class="alert alert-info">No student posts yet. Start the conversation!</div>
+                        {% endfor %}
                     </div>
-                {% empty %}
-                    <div class="alert alert-info">No common posts yet. Start the conversation!</div>
-                {% endfor %}
+                </div>
             </div>
 
-            <div class="col-lg-4">
+            <!-- Common Chat Tab -->
+            <div class="tab-pane fade" id="common-chat" role="tabpanel">
                 <div class="card mb-4">
-                    <div class="card-header">
-                        <h5 class="mb-0">Common Chat Preview</h5>
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">💬 Common Chat</h5>
                     </div>
                     <div class="card-body">
                         {% if common_chat_preview %}
@@ -121,13 +215,16 @@
                         {% else %}
                             <p class="text-muted">No messages in common chat yet.</p>
                         {% endif %}
-                        <a href="{% url 'common_chat' %}" class="btn btn-sm btn-primary">Go to Common Chat</a>
+                        <a href="{% url 'common_chat' %}" class="btn btn-sm btn-success">Go to Common Chat</a>
                     </div>
                 </div>
+            </div>
 
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0">Chat with Anyone</h5>
+            <!-- Personal Chat Tab -->
+            <div class="tab-pane fade" id="personal-chat" role="tabpanel">
+                <div class="card mb-4">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="mb-0">👤 Chat with Anyone</h5>
                     </div>
                     <div class="card-body">
                         {% if other_users %}
