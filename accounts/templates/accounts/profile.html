@@ -2,20 +2,25 @@
 {% block body %}
 <div class="container mt-5">
     <div class="row justify-content-center">
-        <div class="col-md-8">
+        <div class="col-md-10">
             <div class="card">
-                <div class="card-header">
-                    <h2 class="text-center">Your Profile</h2>
+                <div class="card-header bg-primary text-white">
+                    <h2 class="text-center mb-0">Your Profile</h2>
                 </div>
                 <div class="card-body">
                     <div class="text-center mb-4">
                         <h4>Welcome, {{ request.user.get_full_name|default:request.user.username }}!</h4>
                         <p class="text-muted">@{{ request.user.username }}</p>
+                        {% if request.user.is_verified %}
+                        <span class="badge badge-success"><i class="fas fa-check-circle"></i> Verified Member</span>
+                        {% else %}
+                        <span class="badge badge-warning">Pending Verification</span>
+                        {% endif %}
                     </div>
 
-                    <div class="row">
+                    <div class="row mb-4">
                         <div class="col-md-6">
-                            <h5>User Information</h5>
+                            <h5>Account Information</h5>
                             <table class="table table-borderless">
                                 <tr>
                                     <td><strong>Username:</strong></td>
@@ -41,35 +46,55 @@
                         </div>
 
                         <div class="col-md-6">
-                            <h5>JWT Authentication</h5>
-                            {% if jwt_payload %}
-                                <div class="alert alert-success">
-                                    <strong>JWT Token Status:</strong> Valid
-                                </div>
-                                <h6>JWT Payload:</h6>
-                                <ul class="list-group list-group-flush">
-                                    <li class="list-group-item"><strong>User ID:</strong> {{ jwt_payload.user_id }}</li>
-                                    <li class="list-group-item"><strong>Username:</strong> {{ jwt_payload.username }}</li>
-                                    <li class="list-group-item"><strong>Issued at:</strong> {{ jwt_payload.iat|date:"M d, Y H:i:s" }}</li>
-                                    <li class="list-group-item"><strong>Expires:</strong> {{ jwt_payload.exp|date:"M d, Y H:i:s" }}</li>
-                                </ul>
-                            {% else %}
-                                <div class="alert alert-warning">
-                                    <strong>JWT Token Status:</strong> Not available or expired
-                                </div>
-                            {% endif %}
-
-                            <div class="mt-3">
-                                <small class="text-muted">
-                                    JWT Token in cookie: <code>{{ request.COOKIES.jwt_token|truncatechars:20|default:"(not set)" }}</code>
-                                </small>
-                            </div>
+                            <h5>Role</h5>
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Role:</strong></td>
+                                    <td>
+                                        <!-- <span class="badge" style="
+                                            {% if request.user.role == 'admin' %}
+                                                background-color: #dc3545;
+                                            {% elif request.user.role == 'moderator' %}
+                                                background-color: #ffc107; color: black;
+                                            {% else %}
+                                                background-color: #28a745;
+                                            {% endif %}
+                                        ">
+                                            {{ request.user.get_role_display }}
+                                        </span> -->
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Status:</strong></td>
+                                    <td>
+                                        {% if request.user.is_active %}
+                                        <span class="badge badge-success">Active</span>
+                                        {% else %}
+                                        <span class="badge badge-danger">Suspended</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
                         </div>
                     </div>
+
+                    <!-- Admin Links -->
+                    {% if request.user.is_admin %}
+                    <div class="alert alert-info mb-3">
+                        <strong>Administrator Controls:</strong>
+                        <a href="{% url 'admin_panel' %}" class="btn btn-sm btn-info">Admin Panel</a>
+                    </div>
+                    {% elif request.user.is_moderator %}
+                    <div class="alert alert-warning mb-3">
+                        <strong>Moderator Tools:</strong>
+                        <a href="{% url 'moderator_dashboard' %}" class="btn btn-sm btn-warning">Moderation Dashboard</a>
+                    </div>
+                    {% endif %}
                 </div>
                 <div class="card-footer text-center">
+                    <a href="{% url 'user_profile' request.user.username %}" class="btn btn-info">View Full Profile</a>
                     <a href="{% url 'index' %}" class="btn btn-primary">Back to Home</a>
-                    <a href="{% url 'logout' %}" class="btn btn-outline-danger ms-2">Logout</a>
+                    <a href="{% url 'logout' %}" class="btn btn-outline-danger">Logout</a>
                 </div>
             </div>
         </div>

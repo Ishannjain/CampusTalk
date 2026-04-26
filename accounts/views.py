@@ -3,13 +3,16 @@ import jwt
 from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
+from django.contrib import messages
 from django.db.models import Q
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.views.decorators.http import require_http_methods
 
 from .forms import CustomUserCreationForm, LoginForm, PostForm, CommentForm, ChatMessageForm
-from .models import User, CommonPost, Comment, ChatMessage
+from .models import User, CommonPost, Comment, ChatMessage, ContentReport
+from .decorators import admin_required, moderator_required, can_post, can_moderate
 
 
 def make_jwt_token(user):
@@ -119,6 +122,7 @@ def create_post(request):
             post = form.save(commit=False)
             post.author = request.user
             post.save()
+            messages.success(request, 'Post created successfully!')
     return redirect('index')
 
 
@@ -188,3 +192,191 @@ def logout_view(request):
     response = HttpResponseRedirect(reverse('index'))
     response.delete_cookie('jwt_token')
     return response
+
+
+# ============================================================================
+# Content Reporting and Moderation Views
+# ============================================================================
+
+@login_required
+@require_http_methods(['POST'])
+def report_post(request, post_id):
+    """Report inappropriate content"""
+    post = get_object_or_404(CommonPost, pk=post_id)
+    
+    reason = request.POST.get('reason')
+    description = request.POST.get('description', '')
+    
+    if not reason:
+        messages.error(request, 'Please select a reason for reporting.')
+        return redirect('index')
+    
+    # Check if user has already reported this post
+    existing_report = ContentReport.objects.filter(
+        post=post,
+        reporter=request.user
+    ).exists()
+    
+    if existing_report:
+        messages.warning(request, 'You have already reported this post.')
+        return redirect('index')
+    
+    # Create report
+    report = ContentReport.objects.create(
+        post=post,
+        reporter=request.user,
+        reason=reason,
+        description=description
+    )
+    
+    messages.success(request, 'Thank you for reporting. Our team will review this shortly.')
+    return redirect('index')
+
+
+@login_required
+@moderator_required
+def moderator_dashboard(request):
+    """Dashboard for moderators and admins to review reports"""
+    pending_reports = ContentReport.objects.filter(
+        status='pending'
+    ).select_related('post__author', 'reporter').order_by('-created_at')
+    
+    report_stats = {
+        'pending': ContentReport.objects.filter(status='pending').count(),
+        'approved': ContentReport.objects.filter(status='approved').count(),
+        'rejected': ContentReport.objects.filter(status='rejected').count(),
+        'resolved': ContentReport.objects.filter(status='resolved').count(),
+    }
+    
+    return render(request, 'accounts/moderator_dashboard.html', {
+        'pending_reports': pending_reports,
+        'report_stats': report_stats,
+    })
+
+
+@login_required
+@moderator_required
+@require_http_methods(['POST'])
+def review_report(request, report_id):
+    """Review a content report and take action"""
+    report = get_object_or_404(ContentReport, pk=report_id)
+    
+    action = request.POST.get('action')
+    review_notes = request.POST.get('review_notes', '')
+    
+    if action not in ['approve', 'reject', 'resolve']:
+        return JsonResponse({'error': 'Invalid action'}, status=400)
+    
+    # Map action to status
+    status_map = {
+        'approve': 'approved',
+        'reject': 'rejected',
+        'resolve': 'resolved',
+    }
+    
+    report.status = status_map[action]
+    report.reviewed_by = request.user
+    report.review_notes = review_notes
+    report.save()
+    messages.success(request, 'Report status updated.')
+    return redirect('moderator_dashboard')
+
+
+@login_required
+def user_profile(request, username=None):
+    """Display user profile"""
+    if username:
+        user = get_object_or_404(User, username=username)
+    else:
+        user = request.user
+    
+    posts = CommonPost.objects.filter(author=user).count()
+    comments = Comment.objects.filter(author=user).count()
+    
+    user_posts = CommonPost.objects.filter(author=user).order_by('-created_at')[:5]
+    
+    context = {
+        'profile_user': user,
+        'posts_count': posts,
+        'comments_count': comments,
+        'user_posts': user_posts,
+        'is_own_profile': (user == request.user),
+    }
+    
+    return render(request, 'accounts/user_profile.html', context)
+
+
+@login_required
+@admin_required
+def admin_panel(request):
+    """Admin panel for system management"""
+    user_stats = {
+        'total_users': User.objects.count(),
+        'students': User.objects.filter(role='student').count(),
+        'moderators': User.objects.filter(role='moderator').count(),
+        'admins': User.objects.filter(role='admin').count(),
+        'verified_users': User.objects.filter(is_verified=True).count(),
+    }
+    
+    report_stats = {
+        'pending': ContentReport.objects.filter(status='pending').count(),
+        'approved': ContentReport.objects.filter(status='approved').count(),
+        'rejected': ContentReport.objects.filter(status='rejected').count(),
+        'resolved': ContentReport.objects.filter(status='resolved').count(),
+    }
+    
+    recent_reports = ContentReport.objects.all().order_by('-created_at')[:10]
+    staff_list = User.objects.filter(role__in=['moderator', 'admin']).order_by('role', 'username')
+    
+    return render(request, 'accounts/admin_panel.html', {
+        'user_stats': user_stats,
+        'report_stats': report_stats,
+        'recent_reports': recent_reports,
+        'staff_list': staff_list,
+    })
+
+
+@login_required
+@admin_required
+@require_http_methods(['POST'])
+def promote_user(request, user_id):
+    """Promote user to moderator or admin"""
+    user = get_object_or_404(User, pk=user_id)
+    new_role = request.POST.get('role')
+    
+    if new_role not in ['student', 'moderator', 'admin']:
+        messages.error(request, 'Invalid role.')
+        return redirect('admin_panel')
+    
+    old_role = user.get_role_display()
+    user.role = new_role
+    user.save()
+    
+    messages.success(request, f'{user.username} role changed from {old_role} to {user.get_role_display()}.')
+    return redirect('admin_panel')
+
+
+@login_required
+@admin_required
+@require_http_methods(['POST'])
+def manage_user(request, user_id):
+    """Manage user account (verify, warn, suspend)"""
+    user = get_object_or_404(User, pk=user_id)
+    action = request.POST.get('action')
+    
+    if action == 'verify':
+        user.is_verified = True
+        user.save()
+        messages.success(request, f'{user.username} verified.')
+    elif action == 'suspend':
+        user.is_active = False
+        user.save()
+        messages.success(request, f'{user.username} suspended.')
+    elif action == 'unsuspend':
+        user.is_active = True
+        user.save()
+        messages.success(request, f'{user.username} unsuspended.')
+    elif action == 'warn':
+        messages.success(request, f'{user.username} has been warned.')
+    
+    return redirect('admin_panel')

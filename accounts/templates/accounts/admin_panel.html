@@ -1,0 +1,291 @@
+{% extends "accounts/layout.html" %}
+{% block body %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h2>Administrator Panel</h2>
+            <p class="text-muted">System management and user controls</p>
+        </div>
+    </div>
+
+    <!-- System Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-primary">{{ user_stats.total_users }}</h3>
+                    <p class="text-muted">Total Users</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-success">{{ user_stats.verified_users }}</h3>
+                    <p class="text-muted">Verified Users</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-warning">{{ report_stats.pending }}</h3>
+                    <p class="text-muted">Pending Reports</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-info">{{ user_stats.moderators }}</h3>
+                    <p class="text-muted">Moderators</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab Navigation -->
+    <ul class="nav nav-tabs mb-4" role="tablist">
+        <li class="nav-item">
+            <a class="nav-link active" id="staff-tab" data-toggle="tab" href="#staff" role="tab">Staff Management</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="reports-tab" data-toggle="tab" href="#reports" role="tab">Recent Reports</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="stats-tab" data-toggle="tab" href="#stats" role="tab">System Statistics</a>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+        <!-- Staff Management Tab -->
+        <div class="tab-pane fade show active" id="staff" role="tabpanel">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Moderators & Administrators</h5>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Username</th>
+                                <th>Role</th>
+                                <th>Verified</th>
+                                <th>Joined</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for staff_member in staff_list %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'user_profile' staff_member.username %}">
+                                        {{ staff_member.username }}
+                                    </a>
+                                </td>
+                                <td>
+                                    {% if staff_member.role == 'admin' %}
+                                    <span class="badge" style="background-color: #dc3545;">
+                                    {% else %}
+                                    <span class="badge" style="background-color: #ffc107; color: black;">
+                                    {% endif %}
+                                        {{ staff_member.get_role_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if staff_member.is_verified %}
+                                    <span class="badge badge-success">✓ Verified</span>
+                                    {% else %}
+                                    <span class="badge badge-danger">✗ Not Verified</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ staff_member.date_joined|date:"M d, Y" }}</td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <form method="post" action="{% url 'manage_user' staff_member.id %}" style="display: inline;">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="action" value="warn">
+                                            <button type="submit" class="btn btn-warning btn-sm" title="Warn user">⚠</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Reports Tab -->
+        <div class="tab-pane fade" id="reports" role="tabpanel">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Recent Content Reports</h5>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Report ID</th>
+                                <th>Post</th>
+                                <th>Reason</th>
+                                <th>Reporter</th>
+                                <th>Status</th>
+                                <th>Created</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for report in recent_reports %}
+                            <tr>
+                                <td><strong>#{{ report.id }}</strong></td>
+                                <td>
+                                    <small class="text-truncate d-block" style="max-width: 200px;">
+                                        {{ report.post.body|truncatewords:8 }}
+                                    </small>
+                                </td>
+                                <td>
+                                    <span class="badge badge-info">{{ report.get_reason_display }}</span>
+                                </td>
+                                <td>
+                                    <a href="{% url 'user_profile' report.reporter.username %}">
+                                        {{ report.reporter.username }}
+                                    </a>
+                                </td>
+                                <td>
+                                    {% if report.status == 'pending' %}
+                                    <span class="badge" style="background-color: #ffc107;">
+                                    {% elif report.status == 'approved' %}
+                                    <span class="badge" style="background-color: #dc3545;">
+                                    {% elif report.status == 'rejected' %}
+                                    <span class="badge" style="background-color: #28a745;">
+                                    {% else %}
+                                    <span class="badge" style="background-color: #007bff;">
+                                    {% endif %}
+                                        {{ report.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>{{ report.created_at|timesince }} ago</td>
+                                <td>
+                                    <a href="{% url 'moderator_dashboard' %}" class="btn btn-sm btn-primary">Review</a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center text-muted py-4">
+                                    No recent reports
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Statistics Tab -->
+        <div class="tab-pane fade" id="stats" role="tabpanel">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">User Distribution</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span>Students</span>
+                                    <strong>{{ user_stats.students }}</strong>
+                                </div>
+                                <div class="progress">
+                                    <div class="progress-bar bg-success" role="progressbar" 
+                                       ></div>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span>Moderators</span>
+                                    <strong>{{ user_stats.moderators }}</strong>
+                                </div>
+                                <div class="progress">
+                                    <div class="progress-bar bg-warning" role="progressbar"></div>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span>Administrators</span>
+                                    <strong>{{ user_stats.admins }}</strong>
+                                </div>
+                                <div class="progress">
+                                    <div class="progress-bar bg-danger" role="progressbar" 
+                                         ></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Report Status Distribution</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span>Pending</span>
+                                    <strong>{{ report_stats.pending }}</strong>
+                                </div>
+                                <div class="progress">
+                                    <div class="progress-bar" role="progressbar" 
+                                         "></div>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span>Approved</span>
+                                    <strong>{{ report_stats.approved }}</strong>
+                                </div>
+                                <div class="progress">
+                                    <div class="progress-bar bg-danger" role="progressbar" 
+                                         ></div>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span>Rejected</span>
+                                    <strong>{{ report_stats.rejected }}</strong>
+                                </div>
+                                <div class="progress">
+                                    <div class="progress-bar bg-success" role="progressbar" 
+                                         ></div>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span>Resolved</span>
+                                    <strong>{{ report_stats.resolved }}</strong>
+                                </div>
+                                <div class="progress">
+                                    <div class="progress-bar bg-info" role="progressbar" 
+                                         ></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Bootstrap tab functionality
+    $(function() {
+        $('[data-toggle="tab"]').on('click', function(e) {
+            // Tab functionality handled by Bootstrap
+        });
+    });
+</script>
+{% endblock %}

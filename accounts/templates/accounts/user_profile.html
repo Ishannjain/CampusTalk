@@ -1,0 +1,161 @@
+{% extends "accounts/layout.html" %}
+{% block body %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-8">
+            <!-- User Card -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-3 text-center">
+                            <div class="rounded-circle" style="width: 100px; height: 100px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); margin: 0 auto; display: flex; align-items: center; justify-content: center; color: white; font-size: 40px;">
+                                {{ profile_user.username|first|upper }}
+                            </div>
+                        </div>
+                        <div class="col-md-9">
+                            <div class="d-flex align-items-center">
+                                <h2 class="mb-0">{{ profile_user.username }}</h2>
+                                {% if profile_user.is_verified %}
+                                <span class="badge badge-success ml-2"><i class="fas fa-check-circle"></i> Verified</span>
+                                {% endif %}
+                            </div>
+                            <p class="text-muted mb-2">
+                                {% if profile_user.role == 'admin' %}
+                                <span class="badge" style="background-color: #dc3545;">
+                                {% elif profile_user.role == 'moderator' %}
+                                <span class="badge" style="background-color: #ffc107; color: black;">
+                                {% else %}
+                                <span class="badge" style="background-color: #28a745;">
+                                {% endif %}
+                                    {{ profile_user.get_role_display }}
+                                </span>
+                            </p>
+                            <p class="text-muted">
+                                <strong>{{ profile_user.first_name }} {{ profile_user.last_name }}</strong><br>
+                                Joined {{ profile_user.date_joined|date:"F j, Y" }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- User Stats -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h3 class="text-primary">{{ profile_user.role|title }}</h3>
+                            <p class="text-muted">Role</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h3 class="text-success">{{ posts_count }}</h3>
+                            <p class="text-muted">Total Posts</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed Stats -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Activity Stats</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-6">
+                            <h4 class="text-info">{{ posts_count }}</h4>
+                            <p class="text-muted">Posts</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h4 class="text-info">{{ comments_count }}</h4>
+                            <p class="text-muted">Comments</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Posts -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Recent Posts</h5>
+                </div>
+                <div class="list-group list-group-flush">
+                    {% for post in user_posts %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                {% if post.title %}
+                                <h6 class="mb-1">{{ post.title }}</h6>
+                                {% endif %}
+                                <p class="mb-1">{{ post.body|truncatewords:20 }}</p>
+                                <small class="text-muted">{{ post.created_at|timesince }} ago</small>
+                            </div>
+                            <span class="badge badge-info">{{ post.comments.count }} comments</span>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="list-group-item text-muted text-center py-3">
+                        No posts yet.
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            {% if is_own_profile %}
+            <div class="mt-4">
+                <a href="{% url 'profile' %}" class="btn btn-primary">Edit Profile</a>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-md-4">
+            <!-- Quick Stats -->
+            <div class="card mb-3 bg-light">
+                <div class="card-body">
+                    <h6 class="card-title">Quick Stats</h6>
+                    <dl class="row mb-0">
+                        <dt class="col-sm-6">Last Active:</dt>
+                        <dd class="col-sm-6">{{ ranking.last_activity|timesince }} ago</dd>
+                        
+                        <dt class="col-sm-6">Reports:</dt>
+                        <dd class="col-sm-6">{{ ranking.reports_submitted }}</dd>
+                        
+                        <dt class="col-sm-6">Member Since:</dt>
+                        <dd class="col-sm-6">{{ profile_user.date_joined|date:"M Y" }}</dd>
+                    </dl>
+                </div>
+            </div>
+
+            <!-- About Section -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">About</h6>
+                </div>
+                <div class="card-body">
+                    <p class="mb-2">
+                        <strong>Email:</strong><br>
+                        {{ profile_user.email }}
+                    </p>
+                    <p class="mb-0">
+                        <strong>Role:</strong><br>
+                        {% if profile_user.role == 'admin' %}
+                        <span class="badge" style="background-color: #dc3545;">
+                        {% elif profile_user.role == 'moderator' %}
+                        <span class="badge" style="background-color: #ffc107; color: black;">
+                        {% else %}
+                        <span class="badge" style="background-color: #28a745;">
+                        {% endif %}
+                            {{ profile_user.get_role_display }}
+                        </span>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
