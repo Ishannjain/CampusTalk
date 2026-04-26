@@ -47,7 +47,10 @@
     <!-- Tab Navigation -->
     <ul class="nav nav-tabs mb-4" role="tablist">
         <li class="nav-item">
-            <a class="nav-link active" id="staff-tab" data-toggle="tab" href="#staff" role="tab">Staff Management</a>
+            <a class="nav-link active" id="promote-tab" data-toggle="tab" href="#promote" role="tab">Promote Users</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="staff-tab" data-toggle="tab" href="#staff" role="tab">Staff Management</a>
         </li>
         <li class="nav-item">
             <a class="nav-link" id="reports-tab" data-toggle="tab" href="#reports" role="tab">Recent Reports</a>
@@ -58,6 +61,76 @@
     </ul>
 
     <div class="tab-content">
+        <!-- Promote Users Tab -->
+        <div class="tab-pane fade show active" id="promote" role="tabpanel">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Promote Users to Moderator or Admin</h5>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Username</th>
+                                <th>Current Role</th>
+                                <th>Verified</th>
+                                <th>Joined</th>
+                                <th>Posts</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for student in students_list %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'user_profile' student.username %}">
+                                        {{ student.username }}
+                                    </a>
+                                </td>
+                                <td>
+                                    <span class="badge badge-secondary">{{ student.get_role_display }}</span>
+                                </td>
+                                <td>
+                                    {% if student.is_verified %}
+                                    <span class="badge badge-success">✓ Verified</span>
+                                    {% else %}
+                                    <span class="badge badge-danger">✗ Not Verified</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ student.date_joined|date:"M d, Y" }}</td>
+                                <td>{{ student.posts_count }}</td>
+                                <td>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <form method="post" action="{% url 'promote_user' student.id %}" style="display: inline;">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="role" value="moderator">
+                                            <button type="submit" class="btn btn-warning btn-sm" title="Promote to Moderator" onclick="return confirm('Promote {{ student.username }} to Moderator?')">
+                                                Promote to Moderator
+                                            </button>
+                                        </form>
+                                        <form method="post" action="{% url 'promote_user' student.id %}" style="display: inline;">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="role" value="admin">
+                                            <button type="submit" class="btn btn-danger btn-sm" title="Promote to Admin" onclick="return confirm('Promote {{ student.username }} to Admin?')">
+                                                Promote to Admin
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">
+                                    No students available for promotion
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
         <!-- Staff Management Tab -->
         <div class="tab-pane fade show active" id="staff" role="tabpanel">
             <div class="card">

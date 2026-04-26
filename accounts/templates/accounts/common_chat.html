@@ -1,45 +1,171 @@
 {% extends "accounts/layout.html" %}
-{% block body %}
-<div class="container mt-4">
-    <div class="row justify-content-center">
-        <div class="col-lg-10">
-            <div class="card">
-                <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0">Common Campus Chat</h4>
-                </div>
-                <div class="card-body">
-                    <p class="text-muted">This is the shared community chat. Everyone can read and post here.</p>
-                    <div class="mb-4">
-                        {% if messages %}
-                            <div class="list-group">
-                                {% for message in messages %}
-                                    <div class="list-group-item">
-                                        <div class="d-flex justify-content-between">
-                                            <strong>{{ message.sender.username }}</strong>
-                                            <small class="text-muted">{{ message.created_at|date:'M d, Y H:i' }}</small>
-                                        </div>
-                                        <p class="mb-0">{{ message.message|linebreaksbr }}</p>
-                                    </div>
-                                {% endfor %}
-                            </div>
-                        {% else %}
-                            <p class="text-muted">No messages yet. Send the first one!</p>
-                        {% endif %}
-                    </div>
 
-                    <form method="post" action="{% url 'common_chat' %}">
-                        {% csrf_token %}
-                        <div class="mb-3">
-                            {{ form.message }}
-                        </div>
-                        <button class="btn btn-primary">Send to Common Chat</button>
-                    </form>
-                </div>
-                <div class="card-footer text-end">
-                    <a href="{% url 'index' %}" class="btn btn-outline-secondary">Back to Home</a>
+{% block body %}
+<style>
+    body {
+        background-color: #f1f3f6;
+    }
+
+    /* FULL CHAT LAYOUT */
+    .chat-container {
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .chat-header {
+        background: #0d6efd;
+        color: white;
+        padding: 15px 20px;
+        font-size: 18px;
+        font-weight: 600;
+    }
+
+    .chat-body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+    }
+
+    .chat-footer {
+        padding: 15px;
+        background: #fff;
+        border-top: 1px solid #ddd;
+    }
+
+    /* CHAT BUBBLES */
+    .message-row {
+        display: flex;
+        margin-bottom: 10px;
+    }
+
+    .message-row.me {
+        justify-content: flex-end;
+    }
+
+    .bubble {
+        max-width: 70%;
+        padding: 10px 15px;
+        border-radius: 20px;
+        font-size: 14px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+
+    .me .bubble {
+        background: #0d6efd;
+        color: white;
+        border-bottom-right-radius: 5px;
+    }
+
+    .other .bubble {
+        background: white;
+        border-bottom-left-radius: 5px;
+    }
+
+    .meta {
+        font-size: 11px;
+        opacity: 0.7;
+        margin-top: 5px;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    /* INPUT */
+    .chat-input {
+        border-radius: 30px;
+        padding: 10px 15px;
+    }
+
+    /* TOAST */
+    .toast-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+    }
+
+    .toast {
+        background: #333;
+        color: white;
+        padding: 12px 18px;
+        margin-bottom: 10px;
+        border-radius: 8px;
+        opacity: 0;
+        transform: translateY(-20px);
+        transition: all 0.3s ease;
+    }
+
+    .toast.show {
+        opacity: 1;
+        transform: translateY(0);
+    }
+</style>
+
+<div class="chat-container">
+
+    <!-- HEADER -->
+    <div class="chat-header">
+        💬 Common Campus Chat
+    </div>
+
+    <!-- CHAT BODY -->
+    <div class="chat-body" id="chatBody">
+        {% for message in messages %}
+            <div class="message-row {% if message.sender == user %}me{% else %}other{% endif %}">
+                <div class="bubble">
+                    <strong>{{ message.sender.username }}</strong><br>
+                    {{ message.message|linebreaksbr }}
+                    <div class="meta">
+                        <span></span>
+                        <span>{{ message.created_at|date:'H:i' }}</span>
+                    </div>
                 </div>
             </div>
-        </div>
+        {% empty %}
+            <p class="text-muted text-center mt-5">No messages yet 👀</p>
+        {% endfor %}
     </div>
+
+    <!-- FOOTER -->
+    <div class="chat-footer">
+        <form method="post" action="{% url 'common_chat' %}" onsubmit="showToast('Message sent 🚀')">
+            {% csrf_token %}
+            <div class="input-group">
+                {{ form.message }}
+                <button class="btn btn-primary px-4">Send</button>
+            </div>
+        </form>
+    </div>
+
 </div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+    // AUTO SCROLL TO BOTTOM
+    const chatBody = document.getElementById("chatBody");
+    chatBody.scrollTop = chatBody.scrollHeight;
+
+    // TOAST FUNCTION
+    function showToast(message) {
+        const container = document.getElementById("toastContainer");
+
+        const toast = document.createElement("div");
+        toast.className = "toast";
+        toast.innerText = message;
+
+        container.appendChild(toast);
+
+        setTimeout(() => {
+            toast.classList.add("show");
+        }, 100);
+
+        setTimeout(() => {
+            toast.classList.remove("show");
+            setTimeout(() => toast.remove(), 300);
+        }, 2500);
+    }
+</script>
+
 {% endblock %}
