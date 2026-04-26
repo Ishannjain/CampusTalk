@@ -1,0 +1,139 @@
+{% extends "accounts/layout.html" %}
+{% block body %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h2>Moderation Dashboard</h2>
+            <p class="text-muted">Review and manage reported content</p>
+        </div>
+    </div>
+
+    <!-- Report Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-warning">{{ report_stats.pending }}</h3>
+                    <p class="text-muted">Pending Reviews</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-danger">{{ report_stats.approved }}</h3>
+                    <p class="text-muted">Approved</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-success">{{ report_stats.rejected }}</h3>
+                    <p class="text-muted">Rejected</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-info">{{ report_stats.resolved }}</h3>
+                    <p class="text-muted">Resolved</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Reports -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Pending Reports ({{ report_stats.pending }})</h5>
+        </div>
+        <div class="card-body">
+            {% if pending_reports %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Report ID</th>
+                            <th>Post</th>
+                            <th>Author</th>
+                            <th>Reporter</th>
+                            <th>Reason</th>
+                            <th>Description</th>
+                            <th>Reported</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for report in pending_reports %}
+                        <tr>
+                            <td><strong>#{{ report.id }}</strong></td>
+                            <td>
+                                <small class="text-truncate d-block" style="max-width: 150px;">
+                                    {{ report.post.body|truncatewords:5 }}
+                                </small>
+                            </td>
+                            <td>
+                                <a href="{% url 'user_profile' report.post.author.username %}">
+                                    {{ report.post.author.username }}
+                                </a>
+                            </td>
+                            <td>
+                                <a href="{% url 'user_profile' report.reporter.username %}">
+                                    {{ report.reporter.username }}
+                                </a>
+                            </td>
+                            <td>
+                                <span class="badge badge-warning">{{ report.get_reason_display }}</span>
+                            </td>
+                            <td>
+                                <small class="text-truncate d-block" style="max-width: 150px;">
+                                    {{ report.description|truncatewords:5 }}
+                                </small>
+                            </td>
+                            <td>
+                                <small class="text-muted">{{ report.created_at|timesince }} ago</small>
+                            </td>
+                            <td>
+                                <form method="post" action="{% url 'review_report' report.id %}" class="d-flex">
+                                    {% csrf_token %}
+                                    <select name="action" class="form-control form-control-sm mr-2" style="width: 150px;" required>
+                                        <option value="">Select action...</option>
+                                        <option value="approve">Approve</option>
+                                        <option value="reject">Reject</option>
+                                        <option value="resolve">Resolve</option>
+                                    </select>
+                                    <button type="submit" class="btn btn-sm btn-primary" style="white-space: nowrap;">Review</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-success" role="alert">
+                <i class="fas fa-check-circle"></i> All reports have been reviewed!
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Review History -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5 class="mb-0">Review History</h5>
+        </div>
+        <div class="card-body">
+            <p class="text-muted">Recent moderation activity appears here.</p>
+        </div>
+    </div>
+</div>
+
+<style>
+    .table-hover tbody tr:hover {
+        background-color: #f5f5f5;
+    }
+</style>
+{% endblock %}
