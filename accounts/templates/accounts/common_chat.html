@@ -109,6 +109,7 @@
     </div>
 
     <!-- CHAT BODY -->
+     
     <div class="chat-body" id="chatBody">
         {% for message in messages %}
             <div class="message-row {% if message.sender == user %}me{% else %}other{% endif %}">
