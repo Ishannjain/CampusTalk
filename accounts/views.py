@@ -11,7 +11,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_http_methods
 
-from .forms import CustomUserCreationForm, LoginForm, PostForm, CommentForm, ChatMessageForm
+from .forms import CustomUserCreationForm, LoginForm, PostForm, CommentForm, ChatMessageForm, UserProfileForm
 from .models import User, CommonPost, Comment, ChatMessage, ContentReport, Report
 from .decorators import admin_required, moderator_required, can_post, can_moderate
 
@@ -63,6 +63,7 @@ def index(request):
             'post_form': post_form,
             'comment_form': comment_form,
             'user_reports': user_reports,
+            'unread_notifications_count': request.user.notifications.filter(is_read=False).count(),
         })
 
     return render(request, 'accounts/index.html')
@@ -128,13 +129,61 @@ def profile(request):
 @login_required
 def create_post(request):
     if request.method == 'POST':
-        form = PostForm(request.POST)
+        form = PostForm(request.POST, request.FILES)
         if form.is_valid():
             post = form.save(commit=False)
             post.author = request.user
             post.save()
             messages.success(request, 'Post created successfully!')
     return redirect('index')
+
+@login_required
+def edit_profile(request):
+    if request.method == 'POST':
+        form = UserProfileForm(request.POST, instance=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Profile updated successfully!')
+            return redirect('profile')
+    else:
+        form = UserProfileForm(instance=request.user)
+    return render(request, 'accounts/edit_profile.html', {'form': form})
+
+@login_required
+def edit_post(request, post_id):
+    post = get_object_or_404(CommonPost, pk=post_id)
+    # Check permission
+    if post.author != request.user and not request.user.is_moderator():
+        messages.error(request, "You don't have permission to edit this post.")
+        return redirect('index')
+    
+    if request.method == 'POST':
+        form = PostForm(request.POST, request.FILES, instance=post)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Post updated successfully!')
+            return redirect('index')
+    else:
+        form = PostForm(instance=post)
+    return render(request, 'accounts/edit_post.html', {'form': form, 'post': post})
+
+@login_required
+def edit_comment(request, comment_id):
+    comment = get_object_or_404(Comment, pk=comment_id)
+    # Check permission
+    if comment.author != request.user and not request.user.is_moderator():
+        messages.error(request, "You don't have permission to edit this comment.")
+        return redirect('index')
+    
+    if request.method == 'POST':
+        form = CommentForm(request.POST, instance=comment)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Comment updated successfully!')
+            return redirect('index')
+    else:
+        form = CommentForm(instance=comment)
+    return render(request, 'accounts/edit_comment.html', {'form': form, 'comment': comment})
 
 
 @login_required
@@ -165,7 +214,7 @@ def common_chat(request):
         form = ChatMessageForm()
 
     return render(request, 'accounts/common_chat.html', {
-        'messages': messages,
+        'chat_messages': messages,
         'form': form,
     })
 
@@ -192,7 +241,7 @@ def personal_chat(request, username):
         form = ChatMessageForm()
 
     return render(request, 'accounts/personal_chat.html', {
-        'messages': messages,
+        'chat_messages': messages,
         'form': form,
         'other_user': other_user,
     })
@@ -208,6 +257,13 @@ def logout_view(request):
 # ============================================================================
 # Content Reporting and Moderation Views
 # ============================================================================
+
+@login_required
+def notifications_view(request):
+    notifications = request.user.notifications.all()
+    # Mark all as read when viewing
+    request.user.notifications.filter(is_read=False).update(is_read=True)
+    return render(request, 'accounts/notifications.html', {'user_notifications': notifications})
 
 @login_required
 @require_http_methods(['POST'])

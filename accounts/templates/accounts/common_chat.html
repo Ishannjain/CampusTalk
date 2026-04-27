@@ -111,7 +111,14 @@
     <!-- CHAT BODY -->
      
     <div class="chat-body" id="chatBody">
-        {% for message in messages %}
+        {% for message in chat_messages %}
+            {% ifchanged message.created_at.date %}
+                <div class="text-center my-3">
+                    <span class="badge badge-secondary py-1 px-3" style="border-radius: 15px; background-color: rgba(0,0,0,0.1); color: #555;">
+                        {{ message.created_at|date:"F d, Y" }}
+                    </span>
+                </div>
+            {% endifchanged %}
             <div class="message-row {% if message.sender == user %}me{% else %}other{% endif %}">
                 <div class="bubble">
                     <strong>{{ message.sender.username }}</strong><br>

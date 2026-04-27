@@ -92,6 +92,7 @@
                     {% endif %}
                 </div>
                 <div class="card-footer text-center">
+                    <a href="{% url 'edit_profile' %}" class="btn btn-warning">Edit Profile</a>
                     <a href="{% url 'user_profile' request.user.username %}" class="btn btn-info">View Full Profile</a>
                     <a href="{% url 'index' %}" class="btn btn-primary">Back to Home</a>
                     <a href="{% url 'logout' %}" class="btn btn-outline-danger">Logout</a>

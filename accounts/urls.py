@@ -14,6 +14,11 @@ urlpatterns = [
     path('common-chat/', views.common_chat, name='common_chat'),
     path('chat/<str:username>/', views.personal_chat, name='personal_chat'),
     
+    path('edit-profile/', views.edit_profile, name='edit_profile'),
+    path('edit-post/<int:post_id>/', views.edit_post, name='edit_post'),
+    path('edit-comment/<int:comment_id>/', views.edit_comment, name='edit_comment'),
+    path('notifications/', views.notifications_view, name='notifications'),
+    
     # Reporting and Moderation
     path('report-post/<int:post_id>/', views.report_post, name='report_post'),
     path('moderator/', views.advanced_moderation, name='moderator_dashboard'),
