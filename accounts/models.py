@@ -1,5 +1,9 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+import datetime
+import jwt
+import base64
+from cryptography.fernet import Fernet
 from django.conf import settings
 from django.core.validators import MinValueValidator
 
@@ -50,9 +54,21 @@ class CommonPost(models.Model):
     body = models.TextField()
     image = models.ImageField(upload_to='post_images/', blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    deleted = models.BooleanField(default=False, help_text='Indicates if the post is deleted')
+    hidden_by = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='hidden_posts', blank=True)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+    deleted_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='deleted_posts')
+    delete_reason = models.TextField(blank=True, null=True)
 
     class Meta:
         ordering = ['-created_at']
+
+    def delete(self, *args, **kwargs):
+        self.deleted = True
+        self.save()
+
+    def is_deleted(self):
+        return self.deleted
 
     def __str__(self):
         return f"{self.author.username}: {self.body[:40]}"
@@ -63,6 +79,18 @@ class Comment(models.Model):
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='comments')
     text = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
+    deleted = models.BooleanField(default=False, help_text='Indicates if the comment is deleted')
+    hidden_by = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='hidden_comments', blank=True)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+    deleted_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='deleted_comments')
+    delete_reason = models.TextField(blank=True, null=True)
+
+    def delete(self, *args, **kwargs):
+        self.deleted = True
+        self.save()
+
+    def is_deleted(self):
+        return self.deleted
 
     class Meta:
         ordering = ['created_at']
@@ -71,13 +99,59 @@ class Comment(models.Model):
         return f"Comment by {self.author.username} on {self.post.id}"
 
 
+# ============================================================================
+# ENCRYPTION UTILS
+# ============================================================================
+def get_cipher():
+    # Ensure key is exactly 32 bytes for Fernet
+    key_base = settings.SECRET_KEY[:32].encode()
+    if len(key_base) < 32:
+        key_base = key_base.ljust(32, b'0')
+    key = base64.urlsafe_b64encode(key_base)
+    return Fernet(key)
+
+def encrypt_message(text):
+    if not text or not isinstance(text, str): return text
+    try:
+        cipher = get_cipher()
+        return f"ENC:{cipher.encrypt(text.encode()).decode()}"
+    except Exception:
+        return text
+
+def decrypt_message(text):
+    if not text or not isinstance(text, str) or not text.startswith("ENC:"):
+        return text
+    try:
+        cipher = get_cipher()
+        encrypted_part = text[4:]
+        return cipher.decrypt(encrypted_part.encode()).decode()
+    except Exception:
+        return "[Decryption Failed]"
+
 class ChatMessage(models.Model):
     sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='sent_messages')
     recipient = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='received_messages', null=True, blank=True)
     message = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     is_common = models.BooleanField(default=False)
+    is_deleted_globally = models.BooleanField(default=False)
+    hidden_by = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='hidden_messages', blank=True)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+    deleted_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='deleted_messages')
+    delete_reason = models.TextField(blank=True, null=True)
 
+
+    def save(self, *args, **kwargs):
+        # Encrypt personal messages before saving if not already encrypted
+        if not self.is_common and self.message and not self.message.startswith("ENC:"):
+            self.message = encrypt_message(self.message)
+        super().save(*args, **kwargs)
+
+    @property
+    def decrypted_message(self):
+        if not self.is_common:
+            return decrypt_message(self.message)
+        return self.message
     class Meta:
         ordering = ['created_at']
 
@@ -285,4 +359,4 @@ class CommentLike(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ('user', 'comment')
+        unique_together = ('user', 'comment')

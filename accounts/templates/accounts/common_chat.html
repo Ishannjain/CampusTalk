@@ -122,11 +122,18 @@
             <div class="message-row {% if message.sender == user %}me{% else %}other{% endif %}">
                 <div class="bubble">
                     <strong>{{ message.sender.username }}</strong><br>
-                    {{ message.message|linebreaksbr }}
+                    {% if message.is_deleted_globally %}
+                        <div class="text-muted small"><em>This message was deleted by {{ message.deleted_by.get_role_display|default:"Moderator" }}.</em></div>
+                    {% else %}
+                        {{ message.message|linebreaksbr }}
+                    {% endif %}
                     <div class="meta">
                         <span>
-                            {% if message.sender == user or user.is_moderator %}
-                                <a href="{% url 'delete_chat_message' message.id %}" class="text-danger mr-1" onclick="return confirm('Delete message?')" title="Delete">
+                            <a href="{% url 'delete_chat_for_me' message.id %}" class="text-muted mr-2" title="Delete for me">
+                                <i class="fas fa-eye-slash" style="font-size: 10px;"></i>
+                            </a>
+                            {% if message.sender == user or user.is_moderator or user.is_admin %}
+                                <a href="{% url 'delete_chat_for_everyone' message.id %}" class="text-danger mr-1" onclick="return confirm('Delete for everyone?')" title="Delete for Everyone">
                                     <i class="fas fa-trash-alt" style="font-size: 10px;"></i>
                                 </a>
                             {% endif %}

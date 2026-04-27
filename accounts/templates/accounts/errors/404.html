@@ -1,0 +1,37 @@
+{% extends 'accounts/layout.html' %}
+
+{% block title %}404 - Page Not Found | CampusConnect{% endblock %}
+
+{% block body %}
+<div class="container text-center py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <h1 class="display-1 text-primary mb-4" style="font-weight: 800;">404</h1>
+            <h2 class="mb-4">Oops! Page Not Found</h2>
+            <p class="lead text-muted mb-5">
+                The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.
+            </p>
+            <div class="error-actions">
+                <a href="{% url 'index' %}" class="btn btn-primary btn-lg px-5 shadow-sm">
+                    <i class="fas fa-home mr-2"></i> Go Back Home
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .display-1 {
+        background: linear-gradient(135deg, #007bff, #6610f2);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        animation: float 6s ease-in-out infinite;
+    }
+
+    @keyframes float {
+        0% { transform: translateY(0px); }
+        50% { transform: translateY(-20px); }
+        100% { transform: translateY(0px); }
+    }
+</style>
+{% endblock %}

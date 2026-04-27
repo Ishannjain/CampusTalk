@@ -53,11 +53,11 @@
                                 <i class="fas fa-gavel"></i> Moderate
                             </a>
                         </li>
-                        <li class="nav-item">
+                        <!-- <li class="nav-item">
                             <a href="{% url 'advanced_moderation' %}" class="nav-link text-warning">
                                 <i class="fas fa-shield-alt"></i> Adv. Moderate
                             </a>
-                        </li>
+                        </li> -->
                         {% endif %}
                         {% if user.is_admin %}
                         <li class="nav-item">
@@ -70,7 +70,7 @@
                             <a href="#" class="nav-link dropdown-toggle" role="button" data-toggle="dropdown">
                                 <i class="fas fa-user-circle"></i> {{ user.username }}
                                 {% if user.is_verified %}
-                                <span class="badge badge-success" style="font-size: 10px;">✓</span>
+                                <span class="badge badge-success" style="font-size: 10px;"></span>
                                 {% endif %}
                             </a>
                             <div class="dropdown-menu dropdown-menu-right">

@@ -1,0 +1,33 @@
+{% extends 'accounts/layout.html' %}
+
+{% block title %}400 - Bad Request | CampusConnect{% endblock %}
+
+{% block body %}
+<div class="container text-center py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <h1 class="display-1 text-secondary mb-4" style="font-weight: 800;">400</h1>
+            <h2 class="mb-4">Bad Request</h2>
+            <p class="lead text-muted mb-5">
+                The server could not understand your request. This might be due to invalid syntax or a broken link.
+            </p>
+            <div class="error-actions">
+                <a href="{% url 'index' %}" class="btn btn-secondary btn-lg px-5 shadow-sm">
+                    <i class="fas fa-exclamation-triangle mr-2"></i> Review Request
+                </a>
+                <a href="{% url 'index' %}" class="btn btn-outline-primary btn-lg px-5 shadow-sm ml-2">
+                    <i class="fas fa-home mr-2"></i> Return Home
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .display-1 {
+        background: linear-gradient(135deg, #6c757d, #343a40);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+</style>
+{% endblock %}
