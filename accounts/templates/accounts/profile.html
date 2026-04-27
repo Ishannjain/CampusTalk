@@ -32,11 +32,11 @@
                                 </tr>
                                 <tr>
                                     <td><strong>First Name:</strong></td>
-                                    <td>{{ request.user.first_name }}</td>
+                                    <td>{{ request.user.first_name|default:"Not Provided" }}</td>
                                 </tr>
                                 <tr>
                                     <td><strong>Last Name:</strong></td>
-                                    <td>{{ request.user.last_name }}</td>
+                                    <td>{{ request.user.last_name|default:"Not Provided" }}</td>
                                 </tr>
                                 <tr>
                                     <td><strong>Date Joined:</strong></td>
@@ -50,19 +50,7 @@
                             <table class="table table-borderless">
                                 <tr>
                                     <td><strong>Role:</strong></td>
-                                    <td>
-                                        <!-- <span class="badge" style="
-                                            {% if request.user.role == 'admin' %}
-                                                background-color: #dc3545;
-                                            {% elif request.user.role == 'moderator' %}
-                                                background-color: #ffc107; color: black;
-                                            {% else %}
-                                                background-color: #28a745;
-                                            {% endif %}
-                                        ">
-                                            {{ request.user.get_role_display }}
-                                        </span> -->
-                                    </td>
+                                    <td>{{ request.user.get_role_display }}</td>
                                 </tr>
                                 <tr>
                                     <td><strong>Status:</strong></td>
@@ -92,6 +80,9 @@
                     {% endif %}
                 </div>
                 <div class="card-footer text-center">
+                    <a href="{% url 'hidden_content' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-eye-slash"></i> Hidden Content
+                    </a>
                     <a href="{% url 'edit_profile' %}" class="btn btn-warning">Edit Profile</a>
                     <a href="{% url 'user_profile' request.user.username %}" class="btn btn-info">View Full Profile</a>
                     <a href="{% url 'index' %}" class="btn btn-primary">Back to Home</a>

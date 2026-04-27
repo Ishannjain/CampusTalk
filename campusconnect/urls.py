@@ -18,6 +18,11 @@ from django.contrib import admin
 from django.urls import path, include
 from django.views.generic import RedirectView
 
+handler404 = 'accounts.views.handler404'
+handler500 = 'accounts.views.handler500'
+handler403 = 'accounts.views.handler403'
+handler400 = 'accounts.views.handler400'
+
 # Custom URL pattern for users subdomain
 # In production, configure your web server (nginx/Apache) to route users.* to this Django app
 

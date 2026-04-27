@@ -1,0 +1,40 @@
+{% extends 'accounts/layout.html' %}
+
+{% block title %}500 - Server Error | CampusConnect{% endblock %}
+
+{% block body %}
+<div class="container text-center py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <h1 class="display-1 text-danger mb-4" style="font-weight: 800;">500</h1>
+            <h2 class="mb-4">Internal Server Error</h2>
+            <p class="lead text-muted mb-5">
+                Something went wrong on our end. We're working on fixing it as fast as we can! Please try refreshing the page or check back later.
+            </p>
+            <div class="error-actions">
+                <a href="{% url 'index' %}" class="btn btn-outline-secondary btn-lg px-5 shadow-sm mr-2">
+                    <i class="fas fa-redo mr-2"></i> Try Again
+                </a>
+                <a href="{% url 'index' %}" class="btn btn-primary btn-lg px-5 shadow-sm">
+                    <i class="fas fa-home mr-2"></i> Go Home
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .display-1 {
+        background: linear-gradient(135deg, #dc3545, #ffc107);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+</style>
+{% endblock %}

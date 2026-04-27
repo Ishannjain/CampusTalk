@@ -46,8 +46,16 @@ urlpatterns = [
 
     # Content Deletion
     path('delete-post/<int:post_id>/', views.delete_post, name='delete_post'),
+    path('hide-post/<int:post_id>/', views.hide_post, name='hide_post'),
+    path('unhide-post/<int:post_id>/', views.unhide_post, name='unhide_post'),
     path('delete-comment/<int:comment_id>/', views.delete_comment, name='delete_comment'),
-    path('delete-chat/<int:message_id>/', views.delete_chat_message, name='delete_chat_message'),
+    path('hide-comment/<int:comment_id>/', views.hide_comment, name='hide_comment'),
+    path('unhide-comment/<int:comment_id>/', views.unhide_comment, name='unhide_comment'),
+    path('delete-chat/<int:message_id>/', views.delete_chat_for_me, name='delete_chat_message'),
+    path('delete-chat-for-me/<int:message_id>/', views.delete_chat_for_me, name='delete_chat_for_me'),
+    path('unhide-chat/<int:message_id>/', views.unhide_chat_message, name='unhide_chat_message'),
+    path('delete-chat-for-everyone/<int:message_id>/', views.delete_chat_for_everyone, name='delete_chat_for_everyone'),
+    path('hidden-content/', views.hidden_content, name='hidden_content'),
 
     # Likes
     path('post/<int:post_id>/like/', views.toggle_post_like, name='toggle_post_like'),

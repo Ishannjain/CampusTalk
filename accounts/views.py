@@ -9,6 +9,7 @@ from django.db.models import Q, Count
 from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 
 from .forms import CustomUserCreationForm, LoginForm, PostForm, CommentForm, ChatMessageForm, UserProfileForm, CommunityForm, CommunityPostForm
@@ -37,10 +38,23 @@ def decode_jwt_token(token):
         return None
 
 
+from django.db.models import Exists, OuterRef, Prefetch
+
 def index(request):
     if request.user.is_authenticated:
-        posts = CommonPost.objects.select_related('author').prefetch_related('comments__author')
-        common_chat_preview = ChatMessage.objects.filter(is_common=True).select_related('sender').order_by('-created_at')[:5]
+        # Annotate comments within prefetch
+        comments_qs = Comment.objects.annotate(
+            is_liked=Exists(CommentLike.objects.filter(comment=OuterRef('pk'), user=request.user))
+        ).select_related('author').prefetch_related('likes')
+        
+        # Annotate posts
+        posts = CommonPost.objects.exclude(hidden_by=request.user).annotate(
+            is_liked=Exists(PostLike.objects.filter(post=OuterRef('pk'), user=request.user))
+        ).select_related('author').prefetch_related(
+            Prefetch('comments', queryset=comments_qs)
+        )
+        
+        common_chat_preview = ChatMessage.objects.filter(is_common=True).exclude(hidden_by=request.user).select_related('sender').order_by('-created_at')[:5]
         other_users = User.objects.exclude(id=request.user.id).order_by('username')
         post_form = PostForm()
         comment_form = CommentForm()
@@ -201,7 +215,7 @@ def add_comment(request, post_id):
 
 @login_required
 def common_chat(request):
-    messages = ChatMessage.objects.filter(is_common=True).select_related('sender').order_by('created_at')
+    messages_list = ChatMessage.objects.filter(is_common=True).exclude(hidden_by=request.user).select_related('sender').order_by('created_at')
     if request.method == 'POST':
         form = ChatMessageForm(request.POST)
         if form.is_valid():
@@ -214,7 +228,7 @@ def common_chat(request):
         form = ChatMessageForm()
 
     return render(request, 'accounts/common_chat.html', {
-        'chat_messages': messages,
+        'chat_messages': messages_list,
         'form': form,
     })
 
@@ -223,10 +237,11 @@ def common_chat(request):
 def personal_chat(request, username):
     other_user = get_object_or_404(User, username=username)
     messages = ChatMessage.objects.filter(
-        is_common=False,
+        is_common=False
     ).filter(
-        Q(sender=request.user, recipient=other_user) | Q(sender=other_user, recipient=request.user)
-    ).select_related('sender', 'recipient').order_by('created_at')
+        Q(sender=request.user, recipient=other_user) | 
+        Q(sender=other_user, recipient=request.user)
+    ).exclude(hidden_by=request.user).select_related('sender', 'recipient').order_by('created_at')
 
     if request.method == 'POST':
         form = ChatMessageForm(request.POST)
@@ -545,20 +560,26 @@ def toggle_community_post_like(request, post_id):
 def delete_post(request, post_id):
     post = get_object_or_404(CommonPost, pk=post_id)
     if post.author == request.user or request.user.is_moderator():
-        post.delete()
-        messages.success(request, 'Post deleted successfully.')
+        post.deleted = True
+        post.deleted_at = timezone.now()
+        post.deleted_by = request.user
+        post.save()
+        messages.success(request, 'Post deleted for everyone.')
     else:
-        messages.error(request, 'You do not have permission to delete this post.')
+        messages.error(request, 'You do not have permission to perform this action.')
     return redirect('index')
 
 @login_required
 def delete_comment(request, comment_id):
     comment = get_object_or_404(Comment, pk=comment_id)
     if comment.author == request.user or request.user.is_moderator():
-        comment.delete()
+        comment.deleted = True
+        comment.deleted_at = timezone.now()
+        comment.deleted_by = request.user
+        comment.save()
         messages.success(request, 'Comment deleted successfully.')
     else:
-        messages.error(request, 'You do not have permission to delete this comment.')
+        messages.error(request, 'You do not have permission to perform this action.')
     return redirect('index')
 
 @login_required
@@ -587,11 +608,89 @@ def toggle_comment_like(request, comment_id):
 
 @login_required
 def delete_chat_message(request, message_id):
+    """Old delete logic preserved for backward compatibility if needed, but redirects to 'for me' by default"""
+    return delete_chat_for_me(request, message_id)
+
+@login_required
+def delete_chat_for_me(request, message_id):
+    message = get_object_or_404(ChatMessage, pk=message_id)
+    message.hidden_by.add(request.user)
+    messages.success(request, 'Message hidden for you.')
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER', reverse('common_chat')))
+
+@login_required
+def delete_chat_for_everyone(request, message_id):
     message = get_object_or_404(ChatMessage, pk=message_id)
     if message.sender == request.user or request.user.is_moderator():
-        message.delete()
-        messages.success(request, 'Message deleted.')
+        message.is_deleted_globally = True
+        message.deleted_at = timezone.now()
+        message.deleted_by = request.user
+        message.save()
+        messages.success(request, 'Message deleted for everyone.')
     else:
-        messages.error(request, 'Permission denied.')
+        messages.error(request, 'You do not have permission to perform this action.')
     return HttpResponseRedirect(request.META.get('HTTP_REFERER', reverse('common_chat')))
+
+@login_required
+def hide_post(request, post_id):
+    post = get_object_or_404(CommonPost, pk=post_id)
+    post.hidden_by.add(request.user)
+    messages.success(request, 'Post hidden from your feed.')
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER', reverse('index')))
+
+@login_required
+def unhide_post(request, post_id):
+    post = get_object_or_404(CommonPost, pk=post_id)
+    post.hidden_by.remove(request.user)
+    messages.success(request, 'Post unhidden.')
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER', reverse('hidden_content')))
+
+@login_required
+def hide_comment(request, comment_id):
+    comment = get_object_or_404(Comment, pk=comment_id)
+    comment.hidden_by.add(request.user)
+    messages.success(request, 'Comment hidden from your view.')
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER', reverse('index')))
+
+@login_required
+def unhide_comment(request, comment_id):
+    comment = get_object_or_404(Comment, pk=comment_id)
+    comment.hidden_by.remove(request.user)
+    messages.success(request, 'Comment unhidden.')
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER', reverse('hidden_content')))
+
+@login_required
+def unhide_chat_message(request, message_id):
+    message = get_object_or_404(ChatMessage, pk=message_id)
+    message.hidden_by.remove(request.user)
+    messages.success(request, 'Message unhidden.')
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER', reverse('hidden_content')))
+
+@login_required
+def hidden_content(request):
+    hidden_posts = CommonPost.objects.filter(hidden_by=request.user)
+    hidden_comments = Comment.objects.filter(hidden_by=request.user)
+    hidden_messages = ChatMessage.objects.filter(hidden_by=request.user)
+    
+    return render(request, 'accounts/hidden_content.html', {
+        'hidden_posts': hidden_posts,
+        'hidden_comments': hidden_comments,
+        'hidden_messages': hidden_messages,
+    })
+
+# ============================================================================
+# Error Handlers
+# ============================================================================
+
+def handler404(request, exception):
+    return render(request, 'accounts/errors/404.html', status=404)
+
+def handler500(request):
+    return render(request, 'accounts/errors/500.html', status=500)
+
+def handler403(request, exception):
+    return render(request, 'accounts/errors/403.html', status=403)
+
+def handler400(request, exception):
+    return render(request, 'accounts/errors/400.html', status=400)
 

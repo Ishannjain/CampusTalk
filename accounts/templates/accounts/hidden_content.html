@@ -1,0 +1,91 @@
+{% extends "accounts/layout.html" %}
+{% block title %}Hidden Content - CampusConnect{% endblock %}
+{% block body %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <h2>🙈 Your Hidden Content</h2>
+            <p class="text-muted">Content you've hidden from your feed. You can unhide them here.</p>
+            <hr>
+
+            <!-- Nav Tabs -->
+            <ul class="nav nav-pills mb-4" id="hiddenTab" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link active" id="hidden-posts-tab" data-toggle="pill" href="#hidden-posts" role="tab">Posts ({{ hidden_posts|length }})</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="hidden-comments-tab" data-toggle="pill" href="#hidden-comments" role="tab">Comments ({{ hidden_comments|length }})</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="hidden-messages-tab" data-toggle="pill" href="#hidden-messages" role="tab">Chat Messages ({{ hidden_messages|length }})</a>
+                </li>
+            </ul>
+
+            <!-- Tab Content -->
+            <div class="tab-content" id="hiddenTabContent">
+                <!-- Hidden Posts -->
+                <div class="tab-pane fade show active" id="hidden-posts" role="tabpanel">
+                    {% if hidden_posts %}
+                        {% for post in hidden_posts %}
+                            <div class="card mb-3 border-secondary">
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ post.title|default:"Campus Post" }}</h5>
+                                    <p class="text-muted small">Posted by {{ post.author.username }} on {{ post.created_at|date:"M d, Y" }}</p>
+                                    <p class="card-text">{{ post.body|truncatewords:30 }}</p>
+                                    <a href="{% url 'unhide_post' post.id %}" class="btn btn-sm btn-success">
+                                        <i class="fas fa-eye"></i> Unhide Post
+                                    </a>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="alert alert-info">You haven't hidden any posts.</div>
+                    {% endif %}
+                </div>
+
+                <!-- Hidden Comments -->
+                <div class="tab-pane fade" id="hidden-comments" role="tabpanel">
+                    {% if hidden_comments %}
+                        <ul class="list-group">
+                            {% for comment in hidden_comments %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>{{ comment.author.username }}</strong>: {{ comment.text|truncatewords:20 }}
+                                        <br><small class="text-muted">On post: {{ comment.post.title|default:"Untitled" }}</small>
+                                    </div>
+                                    <a href="{% url 'unhide_comment' comment.id %}" class="btn btn-sm btn-outline-success">
+                                        <i class="fas fa-eye"></i> Unhide
+                                    </a>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <div class="alert alert-info">You haven't hidden any comments.</div>
+                    {% endif %}
+                </div>
+
+                <!-- Hidden Messages -->
+                <div class="tab-pane fade" id="hidden-messages" role="tabpanel">
+                    {% if hidden_messages %}
+                        <ul class="list-group">
+                            {% for message in hidden_messages %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>{{ message.sender.username }}</strong>: {{ message.message|truncatewords:20 }}
+                                        <br><small class="text-muted">{{ message.created_at|date:"M d, H:i" }}</small>
+                                    </div>
+                                    <a href="{% url 'unhide_chat_message' message.id %}" class="btn btn-sm btn-outline-success">
+                                        <i class="fas fa-eye"></i> Unhide
+                                    </a>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <div class="alert alert-info">You haven't hidden any chat messages.</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

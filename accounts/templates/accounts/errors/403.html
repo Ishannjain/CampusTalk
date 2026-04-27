@@ -1,0 +1,45 @@
+{% extends 'accounts/layout.html' %}
+
+{% block title %}403 - Forbidden | CampusConnect{% endblock %}
+
+{% block body %}
+<div class="container text-center py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <h1 class="display-1 text-warning mb-4" style="font-weight: 800;">403</h1>
+            <h2 class="mb-4">Access Forbidden</h2>
+            <p class="lead text-muted mb-5">
+                Sorry, you don't have permission to access this page. If you believe this is an error, please contact a moderator.
+            </p>
+            <div class="error-actions">
+                <a href="{% url 'index' %}" class="btn btn-warning btn-lg px-5 shadow-sm text-white">
+                    <i class="fas fa-lock mr-2"></i> Request Access
+                </a>
+                <a href="{% url 'index' %}" class="btn btn-outline-primary btn-lg px-5 shadow-sm ml-2">
+                    <i class="fas fa-home mr-2"></i> Home
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .display-1 {
+        background: linear-gradient(135deg, #ffc107, #fd7e14);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        animation: shake 0.5s ease-in-out infinite;
+        animation-play-state: paused;
+    }
+    
+    .display-1:hover {
+        animation-play-state: running;
+    }
+
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-5px); }
+        75% { transform: translateX(5px); }
+    }
+</style>
+{% endblock %}
