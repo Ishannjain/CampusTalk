@@ -1,0 +1,226 @@
+{% extends "accounts/layout.html" %}
+{% block body %}
+<div class="container mt-4" id="moderation-app">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Advanced Moderation Dashboard</h2>
+        <div>
+            <select id="statusFilter" class="form-control d-inline-block w-auto">
+                <option value="">All Statuses</option>
+                <option value="pending">Pending</option>
+                <option value="under_review">Under Review</option>
+                <option value="resolved">Resolved</option>
+                <option value="rejected">Rejected</option>
+            </select>
+            <select id="typeFilter" class="form-control d-inline-block w-auto ml-2">
+                <option value="">All Types</option>
+                <option value="post">Post</option>
+                <option value="comment">Comment</option>
+                <option value="user">User</option>
+            </select>
+            <button class="btn btn-primary ml-2" onclick="loadReports()">Filter</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body p-0">
+            <table class="table table-hover mb-0">
+                <thead class="thead-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Reporter</th>
+                        <th>Type</th>
+                        <th>Reason</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="reportsTableBody">
+                    <tr><td colspan="7" class="text-center py-4">Loading reports...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Report Detail Modal -->
+<div class="modal fade" id="reportDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Report Details</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="reportDetailBody">
+                <!-- Content injected via JS -->
+            </div>
+            <div class="modal-footer d-flex justify-content-between">
+                <div>
+                    <button class="btn btn-info btn-sm" onclick="updateStatus('under_review')">Mark Under Review</button>
+                </div>
+                <div>
+                    <select id="moderationActionSelect" class="form-control d-inline-block w-auto form-control-sm">
+                        <option value="">Select Action...</option>
+                        <option value="warn">Warn User</option>
+                        <option value="delete_content">Delete Content</option>
+                        <option value="ban_user">Ban User</option>
+                        <option value="ignore">Reject/Ignore</option>
+                    </select>
+                    <input type="text" id="moderationNotes" class="form-control d-inline-block w-auto form-control-sm ml-2" placeholder="Internal notes...">
+                    <button class="btn btn-danger btn-sm ml-2" onclick="executeAction()">Execute Action</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentReportId = null;
+
+    async function loadReports() {
+        const tbody = document.getElementById('reportsTableBody');
+        const status = document.getElementById('statusFilter').value;
+        const type = document.getElementById('typeFilter').value;
+        
+        let url = '/api/reports/list/?';
+        if(status) url += `status=${status}&`;
+        if(type) url += `type=${type}&`;
+
+        try {
+            const res = await fetch(url);
+            const data = await res.json();
+            
+            tbody.innerHTML = '';
+            if(data.reports.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4">No reports found.</td></tr>';
+                return;
+            }
+
+            data.reports.forEach(r => {
+                let badgeClass = 'secondary';
+                if(r.status === 'pending') badgeClass = 'warning';
+                else if(r.status === 'under_review') badgeClass = 'info';
+                else if(r.status === 'resolved') badgeClass = 'success';
+                else if(r.status === 'rejected') badgeClass = 'secondary';
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>#${r.id}</td>
+                    <td>${r.reporter_username}</td>
+                    <td><span class="badge badge-dark">${r.target_type.toUpperCase()}</span></td>
+                    <td>${r.reason}</td>
+                    <td><span class="badge badge-${badgeClass}">${r.status_display}</span></td>
+                    <td>${new Date(r.created_at).toLocaleString()}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" onclick="openReport(${r.id})">Review</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        } catch(e) {
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-danger">Failed to load reports.</td></tr>';
+        }
+    }
+
+    async function openReport(id) {
+        currentReportId = id;
+        document.getElementById('reportDetailBody').innerHTML = 'Loading...';
+        $('#reportDetailModal').modal('show');
+        
+        try {
+            const res = await fetch(`/api/reports/${id}/`);
+            const r = await res.json();
+            
+            let html = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Report Info</h6>
+                        <table class="table table-sm">
+                            <tr><th>Reporter</th><td>${r.reporter}</td></tr>
+                            <tr><th>Reason</th><td>${r.reason}</td></tr>
+                            <tr><th>Status</th><td>${r.status_display}</td></tr>
+                            <tr><th>Date</th><td>${new Date(r.created_at).toLocaleString()}</td></tr>
+                        </table>
+                        <h6>Description Provided</h6>
+                        <p class="text-muted p-2 bg-light rounded">${r.description || 'No description provided.'}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Reported Content Preview</h6>
+                        <div class="p-3 bg-light border rounded">
+                            <span class="badge badge-dark mb-2">${r.target_type.toUpperCase()} (ID: ${r.target_id})</span><br>
+                            ${r.target_preview}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            if(r.actions && r.actions.length > 0) {
+                html += `<h6 class="mt-4">Action History</h6><ul class="list-group list-group-sm">`;
+                r.actions.forEach(a => {
+                    html += `<li class="list-group-item">
+                        <strong>${a.action_taken}</strong> by ${a.moderator} on ${new Date(a.created_at).toLocaleString()}
+                        <br><small class="text-muted">${a.notes}</small>
+                    </li>`;
+                });
+                html += `</ul>`;
+            }
+
+            document.getElementById('reportDetailBody').innerHTML = html;
+        } catch(e) {
+            document.getElementById('reportDetailBody').innerHTML = '<span class="text-danger">Error loading details</span>';
+        }
+    }
+
+    async function updateStatus(status) {
+        if(!currentReportId) return;
+        try {
+            const res = await fetch(`/api/reports/${currentReportId}/`, {
+                method: 'PATCH',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({status: status})
+            });
+            if(res.ok) {
+                alert('Status updated');
+                loadReports();
+                openReport(currentReportId);
+            }
+        } catch(e) {
+            alert('Failed to update status');
+        }
+    }
+
+    async function executeAction() {
+        if(!currentReportId) return;
+        const action = document.getElementById('moderationActionSelect').value;
+        const notes = document.getElementById('moderationNotes').value;
+        
+        if(!action) {
+            alert('Please select an action');
+            return;
+        }
+        if(confirm(`Are you sure you want to execute: ${action}?`)) {
+            try {
+                const res = await fetch(`/api/reports/${currentReportId}/action/`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({action_taken: action, notes: notes})
+                });
+                if(res.ok) {
+                    alert('Action executed successfully');
+                    $('#reportDetailModal').modal('hide');
+                    loadReports();
+                } else {
+                    const err = await res.json();
+                    alert(`Error: ${err.error}`);
+                }
+            } catch(e) {
+                alert('Action failed');
+            }
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', loadReports);
+</script>
+{% endblock %}

@@ -174,7 +174,17 @@
                                 </td>
                                 <td>{{ staff_member.date_joined|date:"M d, Y" }}</td>
                                 <td>
-                                    <div class="btn-group btn-group-sm">
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <form method="post" action="{% url 'manage_user' staff_member.id %}" style="display: inline;">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="action" value="verify">
+                                            <button type="submit" class="btn btn-success btn-sm" title="Verify user" {% if staff_member.is_verified %}disabled{% endif %}>✓</button>
+                                        </form>
+                                        <form method="post" action="{% url 'manage_user' staff_member.id %}" style="display: inline;">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="action" value="unverify">
+                                            <button type="submit" class="btn btn-outline-danger btn-sm" title="Unverify user" {% if not staff_member.is_verified %}disabled{% endif %}>✗</button>
+                                        </form>
                                         <form method="post" action="{% url 'manage_user' staff_member.id %}" style="display: inline;">
                                             {% csrf_token %}
                                             <input type="hidden" name="action" value="warn">
@@ -214,9 +224,7 @@
                             <tr>
                                 <td><strong>#{{ report.id }}</strong></td>
                                 <td>
-                                    <small class="text-truncate d-block" style="max-width: 200px;">
-                                        {{ report.post.body|truncatewords:8 }}
-                                    </small>
+                                    <span class="badge badge-dark">{{ report.target_type|upper }}</span> {{ report.target_id }}
                                 </td>
                                 <td>
                                     <span class="badge badge-info">{{ report.get_reason_display }}</span>
@@ -229,19 +237,19 @@
                                 <td>
                                     {% if report.status == 'pending' %}
                                     <span class="badge" style="background-color: #ffc107;">
-                                    {% elif report.status == 'approved' %}
-                                    <span class="badge" style="background-color: #dc3545;">
+                                    {% elif report.status == 'under_review' %}
+                                    <span class="badge" style="background-color: #17a2b8;">
                                     {% elif report.status == 'rejected' %}
-                                    <span class="badge" style="background-color: #28a745;">
+                                    <span class="badge" style="background-color: #6c757d;">
                                     {% else %}
-                                    <span class="badge" style="background-color: #007bff;">
+                                    <span class="badge" style="background-color: #28a745;">
                                     {% endif %}
                                         {{ report.get_status_display }}
                                     </span>
                                 </td>
                                 <td>{{ report.created_at|timesince }} ago</td>
                                 <td>
-                                    <a href="{% url 'moderator_dashboard' %}" class="btn btn-sm btn-primary">Review</a>
+                                    <a href="{% url 'advanced_moderation' %}" class="btn btn-sm btn-primary">Review</a>
                                 </td>
                             </tr>
                             {% empty %}
@@ -317,11 +325,11 @@
                             </div>
                             <div class="mb-3">
                                 <div class="d-flex justify-content-between mb-1">
-                                    <span>Approved</span>
-                                    <strong>{{ report_stats.approved }}</strong>
+                                    <span>Under Review</span>
+                                    <strong>{{ report_stats.under_review }}</strong>
                                 </div>
                                 <div class="progress">
-                                    <div class="progress-bar bg-danger" role="progressbar" 
+                                    <div class="progress-bar bg-info" role="progressbar" 
                                          ></div>
                                 </div>
                             </div>
@@ -331,7 +339,7 @@
                                     <strong>{{ report_stats.rejected }}</strong>
                                 </div>
                                 <div class="progress">
-                                    <div class="progress-bar bg-success" role="progressbar" 
+                                    <div class="progress-bar bg-secondary" role="progressbar" 
                                          ></div>
                                 </div>
                             </div>
