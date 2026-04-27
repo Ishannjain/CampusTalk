@@ -10,9 +10,16 @@
                 <div class="card-body">
                     <p class="text-muted">Personal chat visible only to you and {{ other_user.username }}.</p>
 
-                    {% if messages %}
+                    {% if chat_messages %}
                         <div class="mb-4">
-                            {% for message in messages %}
+                            {% for message in chat_messages %}
+                                {% ifchanged message.created_at.date %}
+                                    <div class="text-center my-3">
+                                        <span class="badge badge-light border py-1 px-3" style="border-radius: 15px; color: #666;">
+                                            {{ message.created_at|date:"F d, Y" }}
+                                        </span>
+                                    </div>
+                                {% endifchanged %}
                                 <div class="mb-3 p-3 rounded {% if message.sender == request.user %}bg-light{% else %}bg-white border{% endif %}">
                                     <div class="d-flex justify-content-between mb-2">
                                         <strong>{{ message.sender.username }}</strong>
