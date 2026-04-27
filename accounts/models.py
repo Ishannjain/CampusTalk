@@ -228,3 +228,61 @@ class SystemNotification(models.Model):
 
     def __str__(self):
         return f"Notification for {self.recipient.username} (Read: {self.is_read})"
+
+
+# ============================================================================
+# COMMUNITY MODULE MODELS
+# ============================================================================
+
+class Community(models.Model):
+    name = models.CharField(max_length=100)
+    description = models.TextField()
+    creator = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='created_communities')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name_plural = "Communities"
+
+    def __str__(self):
+        return self.name
+
+class CommunityPost(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='community_posts')
+    community = models.ForeignKey(Community, on_delete=models.CASCADE, related_name='posts')
+    content = models.TextField()
+    image = models.ImageField(upload_to='community_posts/', blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_anonymous = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Post by {self.user.username} in {self.community.name} (Anonymous: {self.is_anonymous})"
+
+class CommunityPostLike(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    post = models.ForeignKey(CommunityPost, on_delete=models.CASCADE, related_name='likes')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'post')
+
+    def __str__(self):
+        return f"{self.user.username} liked Post {self.post.id}"
+
+class PostLike(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    post = models.ForeignKey(CommonPost, on_delete=models.CASCADE, related_name='likes')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'post')
+
+class CommentLike(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    comment = models.ForeignKey(Comment, on_delete=models.CASCADE, related_name='likes')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'comment')

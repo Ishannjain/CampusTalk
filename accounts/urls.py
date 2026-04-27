@@ -38,4 +38,18 @@ urlpatterns = [
     
     path('api/notifications/', api_views.get_unread_notifications, name='api_notifications'), # GET
     path('api/notifications/mark_read/', api_views.get_unread_notifications, name='api_notifications_read'), # POST
-]
+
+    # Community Module
+    path('communities/', views.community_list, name='community_list'),
+    path('community/<int:community_id>/', views.community_detail, name='community_detail'),
+    path('community-post/<int:post_id>/like/', views.toggle_community_post_like, name='toggle_community_post_like'),
+
+    # Content Deletion
+    path('delete-post/<int:post_id>/', views.delete_post, name='delete_post'),
+    path('delete-comment/<int:comment_id>/', views.delete_comment, name='delete_comment'),
+    path('delete-chat/<int:message_id>/', views.delete_chat_message, name='delete_chat_message'),
+
+    # Likes
+    path('post/<int:post_id>/like/', views.toggle_post_like, name='toggle_post_like'),
+    path('comment/<int:comment_id>/like/', views.toggle_comment_like, name='toggle_comment_like'),
+]

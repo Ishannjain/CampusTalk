@@ -11,8 +11,8 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_http_methods
 
-from .forms import CustomUserCreationForm, LoginForm, PostForm, CommentForm, ChatMessageForm, UserProfileForm
-from .models import User, CommonPost, Comment, ChatMessage, ContentReport, Report
+from .forms import CustomUserCreationForm, LoginForm, PostForm, CommentForm, ChatMessageForm, UserProfileForm, CommunityForm, CommunityPostForm
+from .models import User, CommonPost, Comment, ChatMessage, ContentReport, Report, Community, CommunityPost, CommunityPostLike, PostLike, CommentLike
 from .decorators import admin_required, moderator_required, can_post, can_moderate
 
 
@@ -469,3 +469,129 @@ def manage_user(request, user_id):
         messages.success(request, f'{user.username} has been warned.')
     
     return redirect('admin_panel')
+
+# ============================================================================
+# COMMUNITY MODULE VIEWS
+# ============================================================================
+
+@login_required
+def community_list(request):
+    communities = Community.objects.all().annotate(post_count=Count('posts'))
+    if request.method == 'POST':
+        form = CommunityForm(request.POST)
+        if form.is_valid():
+            community = form.save(commit=False)
+            community.creator = request.user
+            community.save()
+            messages.success(request, f'Community "{community.name}" created!')
+            return redirect('community_list')
+    else:
+        form = CommunityForm()
+    
+    return render(request, 'accounts/community_list.html', {
+        'communities': communities,
+        'form': form
+    })
+
+@login_required
+def community_detail(request, community_id):
+    community = get_object_or_404(Community, pk=community_id)
+    posts = community.posts.all().prefetch_related('likes')
+    
+    # Check if current user liked each post
+    for post in posts:
+        post.is_liked = post.likes.filter(user=request.user).exists()
+
+    if request.method == 'POST':
+        form = CommunityPostForm(request.POST, request.FILES)
+        if form.is_valid():
+            post = form.save(commit=False)
+            post.user = request.user
+            post.community = community
+            post.save()
+            messages.success(request, 'Posted to community!')
+            return redirect('community_detail', community_id=community.id)
+    else:
+        form = CommunityPostForm()
+
+    return render(request, 'accounts/community_detail.html', {
+        'community': community,
+        'posts': posts,
+        'form': form
+    })
+
+@login_required
+@require_http_methods(['POST'])
+def toggle_community_post_like(request, post_id):
+    post = get_object_or_404(CommunityPost, pk=post_id)
+    like, created = CommunityPostLike.objects.get_or_create(user=request.user, post=post)
+    
+    if not created:
+        like.delete()
+        action = 'unliked'
+    else:
+        action = 'liked'
+    
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return JsonResponse({'status': 'success', 'action': action, 'likes_count': post.likes.count()})
+    
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER', reverse('community_list')))
+
+# ============================================================================
+# CONTENT DELETION VIEWS
+# ============================================================================
+
+@login_required
+def delete_post(request, post_id):
+    post = get_object_or_404(CommonPost, pk=post_id)
+    if post.author == request.user or request.user.is_moderator():
+        post.delete()
+        messages.success(request, 'Post deleted successfully.')
+    else:
+        messages.error(request, 'You do not have permission to delete this post.')
+    return redirect('index')
+
+@login_required
+def delete_comment(request, comment_id):
+    comment = get_object_or_404(Comment, pk=comment_id)
+    if comment.author == request.user or request.user.is_moderator():
+        comment.delete()
+        messages.success(request, 'Comment deleted successfully.')
+    else:
+        messages.error(request, 'You do not have permission to delete this comment.')
+    return redirect('index')
+
+@login_required
+@require_http_methods(['POST'])
+def toggle_post_like(request, post_id):
+    post = get_object_or_404(CommonPost, pk=post_id)
+    like, created = PostLike.objects.get_or_create(user=request.user, post=post)
+    if not created:
+        like.delete()
+        action = 'unliked'
+    else:
+        action = 'liked'
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER', reverse('index')))
+
+@login_required
+@require_http_methods(['POST'])
+def toggle_comment_like(request, comment_id):
+    comment = get_object_or_404(Comment, pk=comment_id)
+    like, created = CommentLike.objects.get_or_create(user=request.user, comment=comment)
+    if not created:
+        like.delete()
+        action = 'unliked'
+    else:
+        action = 'liked'
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER', reverse('index')))
+
+@login_required
+def delete_chat_message(request, message_id):
+    message = get_object_or_404(ChatMessage, pk=message_id)
+    if message.sender == request.user or request.user.is_moderator():
+        message.delete()
+        messages.success(request, 'Message deleted.')
+    else:
+        messages.error(request, 'Permission denied.')
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER', reverse('common_chat')))
+

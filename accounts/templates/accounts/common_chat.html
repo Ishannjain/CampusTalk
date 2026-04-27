@@ -124,7 +124,13 @@
                     <strong>{{ message.sender.username }}</strong><br>
                     {{ message.message|linebreaksbr }}
                     <div class="meta">
-                        <span></span>
+                        <span>
+                            {% if message.sender == user or user.is_moderator %}
+                                <a href="{% url 'delete_chat_message' message.id %}" class="text-danger mr-1" onclick="return confirm('Delete message?')" title="Delete">
+                                    <i class="fas fa-trash-alt" style="font-size: 10px;"></i>
+                                </a>
+                            {% endif %}
+                        </span>
                         <span>{{ message.created_at|date:'H:i' }}</span>
                     </div>
                 </div>

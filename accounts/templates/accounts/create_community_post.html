@@ -1,0 +1,47 @@
+{% extends "accounts/layout.html" %}
+{% block body %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0" style="border-radius: 15px;">
+                <div class="card-body p-4">
+                    <h3 class="mb-4 font-weight-bold">✨ Create Community Post</h3>
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="form-group mb-4">
+                            <label class="h6 font-weight-bold">What's on your mind?</label>
+                            {{ form.content }}
+                        </div>
+                        
+                        <div class="form-group mb-4">
+                            <label class="h6 font-weight-bold">Add Image (Optional)</label>
+                            <div class="bg-light p-3 rounded text-center border-dashed">
+                                {{ form.image }}
+                            </div>
+                        </div>
+
+                        <div class="custom-control custom-switch mb-4 p-3 bg-light rounded d-flex align-items-center">
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1 font-weight-bold">Post Anonymously</h6>
+                                <p class="text-muted small mb-0">Your identity will be hidden from other users.</p>
+                            </div>
+                            {{ form.is_anonymous }}
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center">
+                            <a href="{% url 'community_list' %}" class="btn btn-outline-secondary px-4" style="border-radius: 20px;">Cancel</a>
+                            <button type="submit" class="btn btn-primary px-5" style="border-radius: 20px; font-weight: bold;">Post Now</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .border-dashed { border: 2px dashed #dee2e6; }
+    textarea.form-control { border-radius: 10px; border: 1px solid #e0e0e0; transition: all 0.3s; }
+    textarea.form-control:focus { border-color: #007bff; box-shadow: 0 0 0 0.2rem rgba(0,123,255,.1); }
+</style>
+{% endblock %}
