@@ -15,9 +15,15 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path,include
+from django.urls import path, include
+from django.views.generic import RedirectView
+
+# Custom URL pattern for users subdomain
+# In production, configure your web server (nginx/Apache) to route users.* to this Django app
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path("",include("accounts.urls"))
+    path("", include("accounts.urls")),
+    # Users subdomain route - maps users.domain.com/register to registration
+    path('register/', RedirectView.as_view(url='/', permanent=False), name='users_register_redirect'),
 ]

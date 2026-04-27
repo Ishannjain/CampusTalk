@@ -44,6 +44,11 @@ def index(request):
         other_users = User.objects.exclude(id=request.user.id).order_by('username')
         post_form = PostForm()
         comment_form = CommentForm()
+        
+        # Get user's submitted reports
+        user_reports = ContentReport.objects.filter(
+            reporter=request.user
+        ).select_related('post').order_by('-created_at')
 
         # Separate posts by author role
         staff_posts = posts.filter(author__role__in=['admin', 'moderator'])
@@ -57,6 +62,7 @@ def index(request):
             'other_users': other_users,
             'post_form': post_form,
             'comment_form': comment_form,
+            'user_reports': user_reports,
         })
 
     return render(request, 'accounts/index.html')
@@ -83,8 +89,6 @@ def register(request):
         form = CustomUserCreationForm()
 
     return render(request, 'accounts/register.html', {'form': form})
-
-
 def login_view(request):
     if request.method == 'POST':
         form = LoginForm(request.POST)
@@ -266,6 +270,12 @@ def moderator_dashboard(request):
         'students_list': students_list,
     })
 
+@login_required
+@moderator_required
+def advanced_moderation(request):
+    """New REST-powered dashboard for advanced moderation"""
+    return render(request, 'accounts/advanced_moderation.html')
+
 
 @login_required
 @moderator_required
@@ -332,13 +342,13 @@ def admin_panel(request):
     }
     
     report_stats = {
-        'pending': ContentReport.objects.filter(status='pending').count(),
-        'approved': ContentReport.objects.filter(status='approved').count(),
-        'rejected': ContentReport.objects.filter(status='rejected').count(),
-        'resolved': ContentReport.objects.filter(status='resolved').count(),
+        'pending': Report.objects.filter(status='pending').count(),
+        'under_review': Report.objects.filter(status='under_review').count(),
+        'rejected': Report.objects.filter(status='rejected').count(),
+        'resolved': Report.objects.filter(status='resolved').count(),
     }
     
-    recent_reports = ContentReport.objects.all().order_by('-created_at')[:10]
+    recent_reports = Report.objects.all().order_by('-created_at')[:10]
     staff_list = User.objects.filter(role__in=['moderator', 'admin']).order_by('role', 'username')
     
     # Get students list with post count for promotion
@@ -379,7 +389,7 @@ def promote_user(request, user_id):
 @admin_required
 @require_http_methods(['POST'])
 def manage_user(request, user_id):
-    """Manage user account (verify, warn, suspend)"""
+    """Manage user account (verify, unverify, warn, suspend)"""
     user = get_object_or_404(User, pk=user_id)
     action = request.POST.get('action')
     
@@ -387,6 +397,10 @@ def manage_user(request, user_id):
         user.is_verified = True
         user.save()
         messages.success(request, f'{user.username} verified.')
+    elif action == 'unverify':
+        user.is_verified = False
+        user.save()
+        messages.success(request, f'{user.username} verification revoked.')
     elif action == 'suspend':
         user.is_active = False
         user.save()

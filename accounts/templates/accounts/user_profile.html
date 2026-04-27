@@ -18,6 +18,11 @@
                                 {% if profile_user.is_verified %}
                                 <span class="badge badge-success ml-2"><i class="fas fa-check-circle"></i> Verified</span>
                                 {% endif %}
+                                {% if not is_own_profile %}
+                                <button class="btn btn-sm btn-outline-danger ml-auto btn-flag-content" data-target-type="user" data-target-id="{{ profile_user.id }}" title="Report User">
+                                    <i class="fas fa-flag"></i> Report
+                                </button>
+                                {% endif %}
                             </div>
                             <p class="text-muted mb-2">
                                 {% if profile_user.role == 'admin' %}

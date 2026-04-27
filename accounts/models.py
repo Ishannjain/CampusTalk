@@ -155,3 +155,75 @@ class ContentReport(models.Model):
 
     def __str__(self):
         return f"Report of '{self.post.id}' by {self.reporter.username} - {self.get_status_display()}"
+
+
+# ============================================================================
+# NEW GENERIC REPORT SYSTEM MODELS
+# ============================================================================
+
+GENERIC_REPORT_STATUS_CHOICES = [
+    ('pending', 'Pending'),
+    ('under_review', 'Under Review'),
+    ('resolved', 'Resolved'),
+    ('rejected', 'Rejected'),
+]
+
+GENERIC_REPORT_REASON_CHOICES = [
+    ('spam', 'Spam'),
+    ('harassment', 'Harassment / Abuse'),
+    ('hate_speech', 'Hate Speech'),
+    ('misinformation', 'Misinformation'),
+    ('inappropriate', 'Inappropriate Content'),
+    ('other', 'Other'),
+]
+
+TARGET_TYPE_CHOICES = [
+    ('post', 'Post'),
+    ('comment', 'Comment'),
+    ('user', 'User Profile'),
+]
+
+class Report(models.Model):
+    reporter = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='reports_made')
+    target_type = models.CharField(max_length=20, choices=TARGET_TYPE_CHOICES)
+    target_id = models.IntegerField()
+    reason = models.CharField(max_length=50, choices=GENERIC_REPORT_REASON_CHOICES)
+    description = models.TextField(blank=True)
+    status = models.CharField(max_length=20, choices=GENERIC_REPORT_STATUS_CHOICES, default='pending')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Report ({self.reason}) by {self.reporter.username} on {self.target_type}:{self.target_id}"
+
+class ModerationAction(models.Model):
+    ACTION_CHOICES = [
+        ('warn', 'Warn User'),
+        ('delete_content', 'Delete Content'),
+        ('ban_user', 'Ban User'),
+        ('ignore', 'Ignore / Reject Report'),
+    ]
+    report = models.ForeignKey(Report, on_delete=models.CASCADE, related_name='actions')
+    moderator = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='moderation_actions')
+    action_taken = models.CharField(max_length=30, choices=ACTION_CHOICES)
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        mod_name = self.moderator.username if self.moderator else 'Unknown'
+        return f"{self.get_action_taken_display()} by {mod_name} for Report {self.report.id}"
+
+class SystemNotification(models.Model):
+    recipient = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='notifications')
+    message = models.TextField()
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Notification for {self.recipient.username} (Read: {self.is_read})"

@@ -9,6 +9,7 @@
           integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh"
           crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'accounts/css/report_system.css' %}">
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
@@ -37,6 +38,11 @@
                         <li class="nav-item">
                             <a href="{% url 'moderator_dashboard' %}" class="nav-link text-warning">
                                 <i class="fas fa-gavel"></i> Moderate
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{% url 'advanced_moderation' %}" class="nav-link text-warning">
+                                <i class="fas fa-shield-alt"></i> Adv. Moderate
                             </a>
                         </li>
                         {% endif %}
@@ -107,11 +113,46 @@
 
     <footer class="bg-light py-4 mt-5 border-top">
         <div class="container text-center text-muted">
-            <p class="mb-0">&copy; 2024 Campus Connect - Academic Social Network. All rights reserved.</p>
+            <p class="mb-0">&copy; 2026 Campus Connect - Academic Social Network. All rights reserved.</p>
         </div>
     </footer>
 
     <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
+    <script src="{% static 'accounts/js/report_system.js' %}"></script>
+
+    <!-- Report System Modal & Toast Container -->
+    <div id="report-toast-container"></div>
+
+    <div id="reportModalOverlay" class="report-modal-overlay">
+        <div class="report-modal">
+            <div class="report-modal-header">
+                <h3>Report Content</h3>
+                <button type="button" class="close-report-modal">&times;</button>
+            </div>
+            <form id="reportForm">
+                <div class="report-form-group">
+                    <label for="reportReason">Reason for Reporting</label>
+                    <select id="reportReason" required>
+                        <option value="" disabled selected>Select a reason...</option>
+                        <option value="spam">Spam</option>
+                        <option value="harassment">Harassment / Abuse</option>
+                        <option value="hate_speech">Hate Speech</option>
+                        <option value="misinformation">Misinformation</option>
+                        <option value="inappropriate">Inappropriate Content</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="report-form-group">
+                    <label for="reportDescription">Additional Details (Optional)</label>
+                    <textarea id="reportDescription" rows="4" placeholder="Please provide more context to help our moderators..."></textarea>
+                </div>
+                <div class="report-modal-footer">
+                    <button type="button" class="btn-report-cancel">Cancel</button>
+                    <button type="submit" class="btn-report-submit">Submit Report</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </body>
 </html>

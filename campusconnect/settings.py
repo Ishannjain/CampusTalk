@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-ifz3m)$zgs10run+er!-5n#3vlm3q#^g!a2sqdue+r7zsje-78
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'users.localhost', 'users.campusconnect.local']
 
 
 # Application definition
