@@ -1,0 +1,137 @@
+{% extends "accounts/layout.html" %}
+{% block body %}
+<div class="container mt-4">
+    <div class="row">
+        <!-- Sidebar: Community Info -->
+        <div class="col-md-3 mb-4">
+            <div class="card border-0 shadow-sm sticky-top" style="top: 20px; border-radius: 15px;">
+                <div class="card-body">
+                    <h4 class="text-primary font-weight-bold"># {{ community.name }}</h4>
+                    <p class="text-muted small">{{ community.description }}</p>
+                    <hr>
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="bg-light rounded-circle p-2 mr-3">
+                            <i class="fas fa-crown text-warning"></i>
+                        </div>
+                        <div>
+                            <small class="text-muted d-block">Creator</small>
+                            <span class="font-weight-bold">{{ community.creator.username }}</span>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <div class="bg-light rounded-circle p-2 mr-3">
+                            <i class="fas fa-calendar-alt text-info"></i>
+                        </div>
+                        <div>
+                            <small class="text-muted d-block">Created</small>
+                            <span class="font-weight-bold">{{ community.created_at|date:"M Y" }}</span>
+                        </div>
+                    </div>
+                    <a href="{% url 'community_list' %}" class="btn btn-outline-secondary btn-block mt-4" style="border-radius: 20px;">
+                        <i class="fas fa-arrow-left"></i> All Communities
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content: Posts -->
+        <div class="col-md-9">
+            <!-- Create Post Card -->
+            <div class="card border-0 shadow-sm mb-4" style="border-radius: 15px;">
+                <div class="card-body">
+                    <h5 class="mb-3 font-weight-bold">What's on your mind?</h5>
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            {{ form.content }}
+                        </div>
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <div class="custom-file mb-2">
+                                    {{ form.image }}
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-check mb-2">
+                                    {{ form.is_anonymous }}
+                                    <label class="form-check-label ml-2" for="{{ form.is_anonymous.id_for_label }}">
+                                        Post Anonymously 🕵️
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <button type="submit" class="btn btn-primary btn-block" style="border-radius: 20px;">Post</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Posts Feed -->
+            <div id="posts-feed">
+                {% for post in posts %}
+                    <div class="card border-0 shadow-sm mb-4" style="border-radius: 15px;">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center mr-3" style="width: 40px; height: 40px; font-weight: bold;">
+                                        {% if post.is_anonymous %}?{% else %}{{ post.user.username|make_list|first|upper }}{% endif %}
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-0 font-weight-bold">
+                                            {% if post.is_anonymous %}
+                                                <span class="text-secondary">🕵️ Anonymous User</span>
+                                            {% else %}
+                                                {{ post.user.username }}
+                                            {% endif %}
+                                        </h6>
+                                        <small class="text-muted">{{ post.created_at|timesince }} ago</small>
+                                    </div>
+                                </div>
+                                <div class="dropdown">
+                                    {% if post.user == user or user.is_moderator %}
+                                        <a href="{% url 'delete_post' post.id %}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete this post?')">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <p class="card-text" style="font-size: 1.1rem; line-height: 1.6;">{{ post.content|linebreaksbr }}</p>
+
+                            {% if post.image %}
+                                <div class="mb-3">
+                                    <img src="{{ post.image.url }}" class="img-fluid rounded-lg shadow-sm" style="max-height: 500px; width: 100%; object-fit: cover;" alt="Post Image">
+                                </div>
+                            {% endif %}
+
+                            <hr>
+                            <div class="d-flex align-items-center">
+                                <form action="{% url 'toggle_community_post_like' post.id %}" method="post" class="mr-4">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-link p-0 text-decoration-none {% if post.is_liked %}text-danger{% else %}text-muted{% endif %}" style="font-size: 1.2rem;">
+                                        <i class="{% if post.is_liked %}fas{% else %}far{% endif %} fa-heart"></i>
+                                        <span class="ml-1" style="font-size: 1rem;">{{ post.likes.count }}</span>
+                                    </button>
+                                </form>
+                                <button class="btn btn-link p-0 text-muted text-decoration-none mr-4" style="font-size: 1.2rem;">
+                                    <i class="far fa-comment"></i>
+                                </button>
+                                <button class="btn btn-link p-0 text-muted text-decoration-none ml-auto" style="font-size: 1.2rem;">
+                                    <i class="far fa-share-square"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="text-center py-5 bg-white rounded shadow-sm">
+                        <i class="fas fa-ghost fa-3x text-light mb-3"></i>
+                        <h5 class="text-muted">No posts in this community yet.</h5>
+                        <p class="text-muted small">Be the first to spark a conversation!</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

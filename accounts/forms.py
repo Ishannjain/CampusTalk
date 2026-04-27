@@ -86,3 +86,24 @@ class ContentReportForm(forms.ModelForm):
                 }
             ),
         }
+
+from .models import Community, CommunityPost
+
+class CommunityForm(forms.ModelForm):
+    class Meta:
+        model = Community
+        fields = ['name', 'description']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Community Name'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'What is this community about?'}),
+        }
+
+class CommunityPostForm(forms.ModelForm):
+    class Meta:
+        model = CommunityPost
+        fields = ['content', 'image', 'is_anonymous']
+        widgets = {
+            'content': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Share something with this community...'}),
+            'image': forms.FileInput(attrs={'class': 'form-control-file'}),
+            'is_anonymous': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
