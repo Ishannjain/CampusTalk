@@ -12,7 +12,7 @@ from django.urls import reverse
 from django.views.decorators.http import require_http_methods
 
 from .forms import CustomUserCreationForm, LoginForm, PostForm, CommentForm, ChatMessageForm
-from .models import User, CommonPost, Comment, ChatMessage, ContentReport
+from .models import User, CommonPost, Comment, ChatMessage, ContentReport, Report
 from .decorators import admin_required, moderator_required, can_post, can_moderate
 
 
@@ -46,9 +46,9 @@ def index(request):
         comment_form = CommentForm()
         
         # Get user's submitted reports
-        user_reports = ContentReport.objects.filter(
+        user_reports = Report.objects.filter(
             reporter=request.user
-        ).select_related('post').order_by('-created_at')
+        ).order_by('-created_at')
 
         # Separate posts by author role
         staff_posts = posts.filter(author__role__in=['admin', 'moderator'])

@@ -45,7 +45,7 @@
                                             <small class="text-truncate" style="max-width: 70%;">
                                                 <strong>{{ report.get_reason_display }}</strong>
                                             </small>
-                                            <span class="badge badge-{% if report.status == 'pending' %}warning{% elif report.status == 'approved' %}danger{% elif report.status == 'rejected' %}secondary{% else %}success{% endif %}">
+                                            <span class="badge badge-{% if report.status == 'pending' %}warning{% elif report.status == 'under_review' %}info{% elif report.status == 'rejected' %}secondary{% else %}success{% endif %}">
                                                 {{ report.get_status_display }}
                                             </span>
                                         </div>
