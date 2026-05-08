@@ -1,0 +1,86 @@
+{% extends "accounts/layout.html" %}
+
+{% block header_title %}Verify Email{% endblock %}
+{% block header_subtitle %}Please enter the 6-digit code sent to your college email.{% endblock %}
+
+{% block body %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+        <div class="card">
+            <div class="card-body" style="padding: 3rem;">
+                <div class="text-center mb-5">
+                    <div style="background: linear-gradient(135deg, var(--primary), var(--secondary)); width: 60px; height: 60px; border-radius: 15px; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; color: white; font-size: 1.5rem; box-shadow: var(--shadow-md);">
+                        <i class="fas fa-envelope-open-text"></i>
+                    </div>
+                    <h3 style="font-weight: 800; letter-spacing: -0.025em;">Email Verification</h3>
+                    <p class="text-muted mt-2">Sent to <strong>{{ user_email }}</strong></p>
+                </div>
+
+                <div class="alert alert-info mb-4" style="font-size: 0.875rem;">
+                    <i class="fas fa-info-circle"></i>
+                    Check your inbox and spam folder for the code.
+                </div>
+
+                <form method="POST" id="otp-form">
+                    {% csrf_token %}
+                    <div class="form-group mb-4">
+                        <label class="small font-weight-bold text-muted mb-2 text-center d-block">ENTER 6-DIGIT CODE</label>
+                        <input type="text" name="otp" id="otp" 
+                               class="form-control form-control-lg text-center letter-spacing-lg" 
+                               placeholder="000000" maxlength="6" pattern="\d{6}" 
+                               style="font-size: 2rem; font-weight: 800; letter-spacing: 0.5rem; padding: 1.5rem;"
+                               required autofocus autocomplete="one-time-code">
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary btn-block btn-lg" style="padding: 1rem;">
+                        Verify & Activate Account
+                    </button>
+                </form>
+                
+                <div class="text-center mt-5">
+                    <div id="timer-container" class="mb-3">
+                        <span class="text-muted small">Resend code in: </span>
+                        <span id="timer" class="font-weight-bold text-primary">05:00</span>
+                    </div>
+                    <a id="resend-btn" href="{% url 'resend_otp' %}" class="btn btn-outline-secondary btn-sm disabled" style="border: 1px solid var(--border); background: white;">
+                        Resend Verification Code
+                    </a>
+                </div>
+            </div>
+            <div class="card-footer" style="padding: 1.5rem; text-align: center; background: #f8fafc; border-top: 1px solid var(--border);">
+                <p class="mb-0 text-muted small">Need to change email? <a href="{% url 'register' %}" style="color: var(--primary); font-weight: 700;">Register again</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        let timeLeft = 300; 
+        const timerDisplay = document.getElementById('timer');
+        const resendBtn = document.getElementById('resend-btn');
+        
+        const countdown = setInterval(function() {
+            if (timeLeft <= 0) {
+                clearInterval(countdown);
+                timerDisplay.textContent = "00:00";
+                document.getElementById('timer-container').style.display = 'none';
+                resendBtn.classList.remove('disabled');
+            } else {
+                let minutes = Math.floor(timeLeft / 60);
+                let seconds = timeLeft % 60;
+                timerDisplay.textContent = 
+                    (minutes < 10 ? "0" + minutes : minutes) + ":" + 
+                    (seconds < 10 ? "0" + seconds : seconds);
+                timeLeft--;
+            }
+        }, 1000);
+
+        const otpInput = document.getElementById('otp');
+        otpInput.addEventListener('input', function() {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+    });
+</script>
+{% endblock %}
+
