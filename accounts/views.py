@@ -47,8 +47,8 @@ def index(request):
             is_liked=Exists(CommentLike.objects.filter(comment=OuterRef('pk'), user=request.user))
         ).select_related('author').prefetch_related('likes')
         
-        # Annotate posts
-        posts = CommonPost.objects.exclude(hidden_by=request.user).annotate(
+        # Annotate and filter posts
+        posts = CommonPost.objects.exclude(hidden_by=request.user).filter(deleted=False).annotate(
             is_liked=Exists(PostLike.objects.filter(post=OuterRef('pk'), user=request.user))
         ).select_related('author').prefetch_related(
             Prefetch('comments', queryset=comments_qs)
@@ -88,7 +88,10 @@ def register(request):
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
+            user.is_verified = True
+            user.save()
             login(request, user)
+
             token = make_jwt_token(user)
             response = redirect('index')
             response.set_cookie(
@@ -114,6 +117,7 @@ def login_view(request):
 
             if user is not None:
                 login(request, user)
+
                 token = make_jwt_token(user)
                 response = redirect('index')
                 response.set_cookie(
@@ -557,6 +561,22 @@ def toggle_community_post_like(request, post_id):
 # ============================================================================
 
 @login_required
+@login_required
+def chat_list(request):
+    query = request.GET.get('q', '')
+    if query:
+        other_users = User.objects.exclude(id=request.user.id).filter(
+            Q(username__icontains=query) | Q(first_name__icontains=query) | Q(last_name__icontains=query)
+        ).order_by('username')
+    else:
+        # Show recent chats or nothing by default if requested
+        other_users = User.objects.exclude(id=request.user.id).order_by('username')
+
+    return render(request, 'accounts/chat_list.html', {
+        'other_users': other_users,
+        'search_query': query
+    })
+
 def delete_post(request, post_id):
     post = get_object_or_404(CommonPost, pk=post_id)
     if post.author == request.user or request.user.is_moderator():
@@ -693,4 +713,5 @@ def handler403(request, exception):
 
 def handler400(request, exception):
     return render(request, 'accounts/errors/400.html', status=400)
+
 

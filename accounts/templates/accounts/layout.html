@@ -10,18 +10,20 @@
           crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link rel="stylesheet" href="{% static 'accounts/css/report_system.css' %}">
+    <link rel="stylesheet" href="{% static 'accounts/css/modern_ui.css' %}">
+    {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
+    <nav class="navbar navbar-expand-lg sticky-top">
         <div class="container">
             <a href="{% url 'index' %}" class="navbar-brand">
-                <strong>CampusConnect</strong>
+                <i class="fas fa-graduation-cap"></i> CampusConnect
             </a>
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
+                <span class="navbar-toggler-icon"><i class="fas fa-bars" style="color: #6366f1;"></i></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ml-auto">
+                <ul class="navbar-nav ml-auto align-items-center">
                     <li class="nav-item">
                         <a href="{% url 'index' %}" class="nav-link">
                             <i class="fas fa-home"></i> Home
@@ -35,13 +37,18 @@
                         </li>
                         <li class="nav-item">
                             <a href="{% url 'notifications' %}" class="nav-link">
-                                <i class="fas fa-bell"></i> Notifications
+                                <i class="fas fa-bell"></i>
                                 {% if unread_notifications_count %}
                                 <span class="badge badge-danger badge-pill">{{ unread_notifications_count }}</span>
                                 {% endif %}
                             </a>
                         </li>
                         
+                        <li class="nav-item">
+                            <a href="{% url 'inbox' %}" class="nav-link">
+                                <i class="fas fa-paper-plane"></i> Inbox
+                            </a>
+                        </li>
                         <li class="nav-item">
                             <a href="{% url 'common_chat' %}" class="nav-link">
                                 <i class="fas fa-comments"></i> Chat
@@ -53,11 +60,6 @@
                                 <i class="fas fa-gavel"></i> Moderate
                             </a>
                         </li>
-                        <!-- <li class="nav-item">
-                            <a href="{% url 'advanced_moderation' %}" class="nav-link text-warning">
-                                <i class="fas fa-shield-alt"></i> Adv. Moderate
-                            </a>
-                        </li> -->
                         {% endif %}
                         {% if user.is_admin %}
                         <li class="nav-item">
@@ -67,13 +69,13 @@
                         </li>
                         {% endif %}
                         <li class="nav-item dropdown">
-                            <a href="#" class="nav-link dropdown-toggle" role="button" data-toggle="dropdown">
-                                <i class="fas fa-user-circle"></i> {{ user.username }}
-                                {% if user.is_verified %}
-                                <span class="badge badge-success" style="font-size: 10px;"></span>
-                                {% endif %}
+                            <a href="#" class="nav-link dropdown-toggle d-flex align-items-center" role="button" data-toggle="dropdown">
+                                <div class="avatar-sm mr-2" style="width: 32px; height: 32px; background: var(--primary-gradient); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white;">
+                                    {{ user.username|first|upper }}
+                                </div>
+                                {{ user.username }}
                             </a>
-                            <div class="dropdown-menu dropdown-menu-right">
+                            <div class="dropdown-menu dropdown-menu-right glass-card border-0 shadow">
                                 <a href="{% url 'profile' %}" class="dropdown-item">
                                     <i class="fas fa-id-card"></i> My Profile
                                 </a>
@@ -81,9 +83,9 @@
                                     <i class="fas fa-user-alt"></i> View Stats
                                 </a>
                                 <div class="dropdown-divider"></div>
-                                <small class="dropdown-item text-muted">
-                                    <strong>Role:</strong> {{ user.get_role_display }}
-                                </small>
+                                <div class="dropdown-item">
+                                    <small class="text-muted">Role: <strong>{{ user.get_role_display }}</strong></small>
+                                </div>
                                 <div class="dropdown-divider"></div>
                                 <a href="{% url 'logout' %}" class="dropdown-item text-danger">
                                     <i class="fas fa-sign-out-alt"></i> Logout
@@ -97,7 +99,7 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a href="{% url 'register' %}" class="nav-link">
+                            <a href="{% url 'register' %}" class="btn btn-primary ml-lg-3">
                                 <i class="fas fa-user-plus"></i> Register
                             </a>
                         </li>
@@ -110,7 +112,7 @@
     {% if messages %}
     <div class="container mt-3">
         {% for message in messages %}
-        <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
+        <div class="alert glass-card border-0 alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
             {{ message }}
             <button type="button" class="close" data-dismiss="alert">
                 <span>&times;</span>
@@ -120,33 +122,64 @@
     </div>
     {% endif %}
 
-    <main class="container mt-4">
+    <main class="container">
         {% block body %}{% endblock %}
     </main>
 
-    <footer class="bg-light py-4 mt-5 border-top">
-        <div class="container text-center text-muted">
-            <p class="mb-0">&copy; 2026 Campus Connect - Academic Social Network. All rights reserved.</p>
+    <footer class="mt-5">
+        <div class="container text-center">
+            <div class="navbar-brand mb-3">
+                <i class="fas fa-graduation-cap"></i> CampusConnect
+            </div>
+            <p class="text-muted mb-0">&copy; 2026 Campus Connect - Academic Social Network. All rights reserved.</p>
+            <div class="mt-3">
+                <a href="#" class="text-muted mx-2"><i class="fab fa-twitter"></i></a>
+                <a href="#" class="text-muted mx-2"><i class="fab fa-facebook"></i></a>
+                <a href="#" class="text-muted mx-2"><i class="fab fa-instagram"></i></a>
+            </div>
         </div>
     </footer>
 
-    <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@joeattardi/emoji-button@4.6.4/dist/index.min.js"></script>
     <script src="{% static 'accounts/js/report_system.js' %}"></script>
+    <script>
+        $(document).ready(function() {
+            // Update custom file input labels
+            $(document).on('change', '.custom-file-input', function() {
+                let fileName = $(this).val().split('\\').pop();
+                $(this).next('.custom-file-label').addClass("selected").html(fileName || "Choose file");
+                
+                // Optional: Show image preview if a .img-upload-preview exists in the same form
+                const file = this.files[0];
+                if (file && file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    const $preview = $(this).closest('form').find('.img-upload-preview');
+                    reader.onload = function(e) {
+                        $preview.attr('src', e.target.result).parent().fadeIn();
+                    }
+                    reader.readAsDataURL(file);
+                }
+            });
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
 
     <!-- Report System Modal & Toast Container -->
     <div id="report-toast-container"></div>
 
     <div id="reportModalOverlay" class="report-modal-overlay">
-        <div class="report-modal">
-            <div class="report-modal-header">
-                <h3>Report Content</h3>
+        <div class="report-modal glass-card">
+            <div class="report-modal-header border-bottom-0">
+                <h3 class="mb-0">Report Content</h3>
                 <button type="button" class="close-report-modal">&times;</button>
             </div>
-            <form id="reportForm">
-                <div class="report-form-group">
+            <form id="reportForm" class="p-3">
+                <div class="report-form-group mb-3">
                     <label for="reportReason">Reason for Reporting</label>
-                    <select id="reportReason" required>
+                    <select id="reportReason" class="form-control" required>
                         <option value="" disabled selected>Select a reason...</option>
                         <option value="spam">Spam</option>
                         <option value="harassment">Harassment / Abuse</option>
@@ -156,16 +189,16 @@
                         <option value="other">Other</option>
                     </select>
                 </div>
-                <div class="report-form-group">
+                <div class="report-form-group mb-4">
                     <label for="reportDescription">Additional Details (Optional)</label>
-                    <textarea id="reportDescription" rows="4" placeholder="Please provide more context to help our moderators..."></textarea>
+                    <textarea id="reportDescription" class="form-control" rows="4" placeholder="Please provide more context to help our moderators..."></textarea>
                 </div>
-                <div class="report-modal-footer">
-                    <button type="button" class="btn-report-cancel">Cancel</button>
-                    <button type="submit" class="btn-report-submit">Submit Report</button>
+                <div class="report-modal-footer border-top-0 d-flex justify-content-end">
+                    <button type="button" class="btn btn-outline-secondary mr-2 btn-report-cancel">Cancel</button>
+                    <button type="submit" class="btn btn-danger btn-report-submit">Submit Report</button>
                 </div>
             </form>
         </div>
     </div>
 </body>
-</html>
+</html>

@@ -360,3 +360,15 @@ class CommentLike(models.Model):
 
     class Meta:
         unique_together = ('user', 'comment')
+
+class OTP(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='otps')
+    otp_hash = models.CharField(max_length=64)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    is_used = models.BooleanField(default=False)
+    verification_attempts = models.IntegerField(default=0)
+    last_verification_attempt = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"OTP for {self.user.username} (Used: {self.is_used})"

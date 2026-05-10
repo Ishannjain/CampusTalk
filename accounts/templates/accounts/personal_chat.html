@@ -1,67 +1,125 @@
 {% extends "accounts/layout.html" %}
 {% block body %}
-<div class="container mt-4">
-    <div class="row justify-content-center">
-        <div class="col-lg-10">
-            <div class="card">
-                <div class="card-header bg-secondary text-white">
-                    <h4 class="mb-0">Chat with {{ other_user.username }}</h4>
+<div class="container fade-in-up" style="margin-top: 20px;">
+    <div class="glass-card overflow-hidden d-flex flex-column" style="height: 85vh;">
+        <!-- HEADER -->
+        <div class="p-3 border-bottom d-flex align-items-center justify-content-between" style="background: white;">
+            <div class="d-flex align-items-center">
+                <a href="{% url 'inbox' %}" class="btn btn-link text-secondary mr-3">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+                <div class="avatar-sm mr-3" style="background: var(--primary-gradient); color: white;">
+                    {{ other_user.username|first|upper }}
                 </div>
-                <div class="card-body">
-                    <p class="text-muted">Personal chat visible only to you and {{ other_user.username }}.</p>
-
-                    {% if chat_messages %}
-                        <div class="mb-4">
-                            {% for message in chat_messages %}
-                                {% ifchanged message.created_at.date %}
-                                    <div class="text-center my-3">
-                                        <span class="badge badge-light border py-1 px-3" style="border-radius: 15px; color: #666;">
-                                            {{ message.created_at|date:"F d, Y" }}
-                                        </span>
-                                    </div>
-                                {% endifchanged %}
-                                <div class="mb-3 p-3 rounded {% if message.sender == request.user %}bg-light{% else %}bg-white border{% endif %}">
-                                    <div class="d-flex justify-content-between align-items-center mb-1">
-                                        <div>
-                                            <a href="{% url 'delete_chat_for_me' message.id %}" class="text-muted mr-2" title="Delete for me">
-                                                <i class="fas fa-eye-slash" style="font-size: 10px;"></i>
-                                            </a>
-                                            {% if message.sender == user or user.is_moderator or user.is_admin %}
-                                                <a href="{% url 'delete_chat_for_everyone' message.id %}" class="text-danger mr-1" onclick="return confirm('Delete for everyone?')" title="Delete for Everyone">
-                                                    <i class="fas fa-trash-alt" style="font-size: 10px;"></i>
-                                                </a>
-                                            {% endif %}
-                                            <strong>{{ message.sender.username }}</strong>
-                                            <small class="text-muted ml-1">{{ message.created_at|date:'M d, Y H:i' }}</small>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        {% if message.is_deleted_globally %}
-                                            <div class="text-muted small"><em>This message was deleted by {{ message.deleted_by.get_role_display|default:"Moderator" }}.</em></div>
-                                        {% else %}
-                                            {{ message.decrypted_message|linebreaksbr }}
-                                        {% endif %}
-                                    </div>
-                                </div>
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        <p class="text-muted">No messages yet. Start the conversation.</p>
-                    {% endif %}
-
-                    <form method="post" action="{% url 'personal_chat' other_user.username %}">
-                        {% csrf_token %}
-                        <div class="mb-3">
-                            {{ form.message }}
-                        </div>
-                        <button class="btn btn-primary">Send Message</button>
-                    </form>
+                <div>
+                    <h5 class="mb-0 font-weight-bold">{{ other_user.username }}</h5>
+                    <small class="text-muted"><i class="fas fa-circle text-success mr-1" style="font-size: 8px;"></i> Direct Message</small>
                 </div>
-                <div class="card-footer text-end">
-                    <a href="{% url 'index' %}" class="btn btn-outline-secondary">Back to Home</a>
+            </div>
+            <div class="dropdown">
+                <button class="btn btn-link text-muted" data-toggle="dropdown">
+                    <i class="fas fa-info-circle fa-lg"></i>
+                </button>
+                <div class="dropdown-menu dropdown-menu-right glass-card border-0 shadow p-3">
+                    <p class="small text-muted mb-0">Conversation started on {{ other_user.date_joined|date:"M d, Y" }}</p>
                 </div>
             </div>
         </div>
+
+        <!-- CHAT BODY -->
+        <div class="flex-grow-1 p-4" id="chatBody" style="overflow-y: auto; background: rgba(248, 250, 252, 0.5);">
+            <div class="text-center mb-5">
+                <div class="avatar-lg mx-auto mb-3 shadow-sm" style="width: 80px; height: 80px; font-size: 32px; background: white; border: 4px solid #fff; border-radius: 20px; display: flex; align-items: center; justify-content: center; color: var(--primary-gradient);">
+                    {{ other_user.username|first|upper }}
+                </div>
+                <h6 class="font-weight-bold mb-1">{{ other_user.get_full_name|default:other_user.username }}</h6>
+                <p class="text-muted small">You are chatting with {{ other_user.username }}</p>
+                <span class="badge badge-light border text-muted px-3 py-2" style="border-radius: 20px;">
+                    <i class="fas fa-lock mr-1"></i> End-to-end encrypted
+                </span>
+            </div>
+
+            {% for message in chat_messages %}
+                {% ifchanged message.created_at.date %}
+                    <div class="text-center my-4">
+                        <span class="badge badge-light text-secondary border px-3 py-2" style="border-radius: 20px;">
+                            {{ message.created_at|date:"F d, Y" }}
+                        </span>
+                    </div>
+                {% endifchanged %}
+                
+                <div class="d-flex mb-4 {% if message.sender == user %}justify-content-end{% endif %}">
+                    <div style="max-width: 75%;">
+                        <div class="p-3 shadow-sm" >
+                            {% if message.is_deleted_globally %}
+                                <div class="small opacity-75"><em><i class="fas fa-ban mr-1"></i> Message removed.</em></div>
+                            {% else %}
+                                <div class="message-text" style="font-size: 15px; line-height: 1.5;">{{ message.decrypted_message|linebreaksbr }}</div>
+                            {% endif %}
+                            
+                            <div class="d-flex align-items-center justify-content-between mt-2 opacity-75" style="font-size: 11px;">
+                                <div class="d-flex align-items-center">
+                                    <a href="{% url 'delete_chat_for_me' message.id %}" class="{% if message.sender == user %}text-white{% else %}text-muted{% endif %} mr-3" title="Hide">
+                                        <i class="fas fa-eye-slash"></i>
+                                    </a>
+                                    {% if message.sender == user or user.is_moderator or user.is_admin %}
+                                        <a href="{% url 'delete_chat_for_everyone' message.id %}" class="{% if message.sender == user %}text-white{% else %}text-danger{% endif %}" onclick="return confirm('Delete for everyone?')" title="Delete">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </a>
+                                    {% endif %}
+                                </div>
+                                <span class="ml-3">{{ message.created_at|date:'H:i' }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- FOOTER -->
+        <div class="p-3 bg-white border-top">
+            <form method="post" action="{% url 'personal_chat' other_user.username %}">
+                {% csrf_token %}
+                <div class="input-group glass-card overflow-hidden border-0 shadow-sm" style="background: #f1f5f9; border-radius: 12px;">
+                    <div class="input-group-prepend">
+                        <button type="button" id="emoji-trigger" class="btn btn-link text-secondary px-3">
+                            <i class="far fa-smile fa-lg"></i>
+                        </button>
+                    </div>
+                    <input type="text" name="message" id="chat-input" class="form-control border-0 bg-transparent py-4" placeholder="Type your message..." required autocomplete="off">
+                    <div class="input-group-append">
+                        <button class="btn btn-primary px-4">
+                            <i class="fas fa-paper-plane mr-1"></i> Send
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
+
+<script>
+    // AUTO SCROLL TO BOTTOM
+    const chatBody = document.getElementById("chatBody");
+    chatBody.scrollTop = chatBody.scrollHeight;
+
+    // EMOJI PICKER INITIALIZATION
+    document.addEventListener('DOMContentLoaded', () => {
+        const picker = new EmojiButton({
+            position: 'top-start',
+            theme: 'light',
+            autoHide: false,
+            showSearch: true
+        });
+        const trigger = document.querySelector('#emoji-trigger');
+        const input = document.querySelector('#chat-input');
+
+        picker.on('emoji', selection => {
+            input.value += selection.emoji;
+            input.focus();
+        });
+
+        trigger.addEventListener('click', () => picker.togglePicker(trigger));
+    });
+</script>
 {% endblock %}

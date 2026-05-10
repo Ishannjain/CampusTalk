@@ -1,95 +1,104 @@
 {% extends "accounts/layout.html" %}
 {% block body %}
-<div class="container mt-5">
+<div class="container fade-in-up" style="margin-top: 40px; margin-bottom: 60px;">
     <div class="row justify-content-center">
         <div class="col-md-10">
-            <div class="card">
-                <div class="card-header bg-primary text-white">
-                    <h2 class="text-center mb-0">Your Profile</h2>
-                </div>
-                <div class="card-body">
-                    <div class="text-center mb-4">
-                        <h4>Welcome, {{ request.user.get_full_name|default:request.user.username }}!</h4>
-                        <p class="text-muted">@{{ request.user.username }}</p>
+            <div class="glass-card overflow-hidden">
+                <div class="p-4 p-md-5 text-center" style="background: var(--primary-gradient); color: white;">
+                    <div class="avatar-xl mx-auto mb-3" style="width: 100px; height: 100px; background: rgba(255,255,255,0.2); border-radius: 30px; display: flex; align-items: center; justify-content: center; font-size: 40px; font-weight: 700; border: 2px solid rgba(255,255,255,0.3);">
+                        {{ request.user.username|first|upper }}
+                    </div>
+                    <h2 class="font-weight-bold mb-1">{{ request.user.get_full_name|default:request.user.username }}</h2>
+                    <p class="mb-3" style="opacity: 0.9;">@{{ request.user.username }}</p>
+                    
+                    <div class="d-flex justify-content-center gap-2">
                         {% if request.user.is_verified %}
-                        <span class="badge badge-success"><i class="fas fa-check-circle"></i> Verified Member</span>
+                            <span class="badge badge-light text-success"><i class="fas fa-check-circle mr-1"></i> Verified Member</span>
                         {% else %}
-                        <span class="badge badge-warning">Pending Verification</span>
+                            <span class="badge badge-light text-warning">Pending Verification</span>
                         {% endif %}
+                        <span class="badge badge-light text-primary">{{ request.user.get_role_display }}</span>
                     </div>
+                </div>
 
-                    <div class="row mb-4">
-                        <div class="col-md-6">
-                            <h5>Account Information</h5>
-                            <table class="table table-borderless">
-                                <tr>
-                                    <td><strong>Username:</strong></td>
-                                    <td>{{ request.user.username }}</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Email:</strong></td>
-                                    <td>{{ request.user.email }}</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>First Name:</strong></td>
-                                    <td>{{ request.user.first_name|default:"Not Provided" }}</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Last Name:</strong></td>
-                                    <td>{{ request.user.last_name|default:"Not Provided" }}</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Date Joined:</strong></td>
-                                    <td>{{ request.user.date_joined|date:"M d, Y" }}</td>
-                                </tr>
-                            </table>
+                <div class="p-4 p-md-5">
+                    <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <h5 class="font-weight-bold mb-4 d-flex align-items-center">
+                                <i class="fas fa-id-card text-primary mr-2"></i> Account Details
+                            </h5>
+                            <div class="list-group list-group-flush bg-transparent">
+                                <div class="list-group-item bg-transparent px-0 border-0 d-flex justify-content-between">
+                                    <span class="text-secondary">Email</span>
+                                    <span class="font-weight-bold">{{ request.user.email }}</span>
+                                </div>
+                                <div class="list-group-item bg-transparent px-0 border-0 d-flex justify-content-between">
+                                    <span class="text-secondary">Full Name</span>
+                                    <span class="font-weight-bold">{{ request.user.get_full_name|default:"Not Provided" }}</span>
+                                </div>
+                                <div class="list-group-item bg-transparent px-0 border-0 d-flex justify-content-between">
+                                    <span class="text-secondary">Joined On</span>
+                                    <span class="font-weight-bold">{{ request.user.date_joined|date:"M d, Y" }}</span>
+                                </div>
+                            </div>
                         </div>
 
-                        <div class="col-md-6">
-                            <h5>Role</h5>
-                            <table class="table table-borderless">
-                                <tr>
-                                    <td><strong>Role:</strong></td>
-                                    <td>{{ request.user.get_role_display }}</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Status:</strong></td>
-                                    <td>
+                        <div class="col-md-6 mb-4">
+                            <h5 class="font-weight-bold mb-4 d-flex align-items-center">
+                                <i class="fas fa-shield-alt text-primary mr-2"></i> Security & Status
+                            </h5>
+                            <div class="list-group list-group-flush bg-transparent">
+                                <div class="list-group-item bg-transparent px-0 border-0 d-flex justify-content-between">
+                                    <span class="text-secondary">Account Status</span>
+                                    <span>
                                         {% if request.user.is_active %}
-                                        <span class="badge badge-success">Active</span>
+                                            <span class="text-success font-weight-bold"><i class="fas fa-circle mr-1" style="font-size: 8px;"></i> Active</span>
                                         {% else %}
-                                        <span class="badge badge-danger">Suspended</span>
+                                            <span class="text-danger font-weight-bold">Suspended</span>
                                         {% endif %}
-                                    </td>
-                                </tr>
-                            </table>
+                                    </span>
+                                </div>
+                                <div class="list-group-item bg-transparent px-0 border-0 d-flex justify-content-between">
+                                    <span class="text-secondary">Role</span>
+                                    <span class="font-weight-bold">{{ request.user.get_role_display }}</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Admin Links -->
                     {% if request.user.is_admin %}
-                    <div class="alert alert-info mb-3">
-                        <strong>Administrator Controls:</strong>
-                        <a href="{% url 'admin_panel' %}" class="btn btn-sm btn-info">Admin Panel</a>
+                    <div class="alert glass-card border-0 d-flex align-items-center justify-content-between p-4 mb-4" style="background: rgba(239, 68, 68, 0.05);">
+                        <div>
+                            <h6 class="font-weight-bold text-danger mb-1">Administrative Privileges</h6>
+                            <p class="text-muted small mb-0">Access core system settings and user management.</p>
+                        </div>
+                        <a href="{% url 'admin_panel' %}" class="btn btn-danger btn-sm">Admin Panel</a>
                     </div>
                     {% elif request.user.is_moderator %}
-                    <div class="alert alert-warning mb-3">
-                        <strong>Moderator Tools:</strong>
-                        <a href="{% url 'moderator_dashboard' %}" class="btn btn-sm btn-warning">Moderation Dashboard</a>
+                    <div class="alert glass-card border-0 d-flex align-items-center justify-content-between p-4 mb-4" style="background: rgba(245, 158, 11, 0.05);">
+                        <div>
+                            <h6 class="font-weight-bold text-warning mb-1">Moderator Tools</h6>
+                            <p class="text-muted small mb-0">Review reports and manage community content.</p>
+                        </div>
+                        <a href="{% url 'moderator_dashboard' %}" class="btn btn-warning btn-sm">Moderation Dashboard</a>
                     </div>
                     {% endif %}
-                </div>
-                <div class="card-footer text-center">
-                    <a href="{% url 'hidden_content' %}" class="btn btn-outline-secondary">
-                        <i class="fas fa-eye-slash"></i> Hidden Content
-                    </a>
-                    <a href="{% url 'edit_profile' %}" class="btn btn-warning">Edit Profile</a>
-                    <a href="{% url 'user_profile' request.user.username %}" class="btn btn-info">View Full Profile</a>
-                    <a href="{% url 'index' %}" class="btn btn-primary">Back to Home</a>
-                    <a href="{% url 'logout' %}" class="btn btn-outline-danger">Logout</a>
+
+                    <div class="d-flex flex-wrap gap-2 mt-4">
+                        <a href="{% url 'edit_profile' %}" class="btn btn-primary mr-2">
+                            <i class="fas fa-edit mr-1"></i> Edit Profile
+                        </a>
+                        <a href="{% url 'user_profile' request.user.username %}" class="btn btn-outline-primary mr-2">
+                            <i class="fas fa-chart-line mr-1"></i> View Stats
+                        </a>
+                        <a href="{% url 'hidden_content' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-eye-slash mr-1"></i> Hidden Content
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 {% endblock %}
+

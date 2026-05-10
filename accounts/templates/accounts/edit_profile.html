@@ -1,34 +1,44 @@
 {% extends "accounts/layout.html" %}
 {% block body %}
-<div class="container mt-5">
+<div class="container fade-in-up" style="margin-top: 50px; margin-bottom: 80px;">
     <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card shadow">
-                <div class="card-header bg-primary text-white text-center">
-                    <h3>Edit Profile</h3>
+        <div class="col-md-6">
+            <div class="glass-card p-5">
+                <div class="text-center mb-5">
+                    <div class="avatar-sm mx-auto mb-3" style="width: 80px; height: 80px; background: var(--primary-gradient); font-size: 32px; color: white;">
+                        <i class="fas fa-user-edit"></i>
+                    </div>
+                    <h3 class="font-weight-bold text-dark">Update Profile</h3>
+                    <p class="text-secondary small">Keep your campus identity up to date</p>
                 </div>
-                <div class="card-body">
-                    <form method="post">
-                        {% csrf_token %}
-                        {% for field in form %}
-                            <div class="form-group mb-3">
-                                <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
-                                {{ field }}
-                                {% if field.errors %}
-                                    <div class="text-danger small">
-                                        {% for error in field.errors %}
-                                            {{ error }}
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                            </div>
-                        {% endfor %}
-                        <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-primary btn-lg">Save Changes</button>
-                            <a href="{% url 'profile' %}" class="btn btn-outline-secondary">Cancel</a>
+
+                <form method="post">
+                    {% csrf_token %}
+                    {% for field in form %}
+                        <div class="form-group mb-4">
+                            <label for="{{ field.id_for_label }}" class="small font-weight-bold text-secondary mb-2" style="text-transform: uppercase; letter-spacing: 1px;">
+                                {{ field.label }}
+                            </label>
+                            {{ field }}
+                            {% if field.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in field.errors %}
+                                        <i class="fas fa-exclamation-circle mr-1"></i> {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
                         </div>
-                    </form>
-                </div>
+                    {% endfor %}
+                    
+                    <div class="d-flex flex-column gap-3 mt-5">
+                        <button type="submit" class="btn btn-primary btn-lg btn-block py-3" style="border-radius: 12px; font-weight: bold; letter-spacing: 0.5px;">
+                            Save Changes
+                        </button>
+                        <a href="{% url 'profile' %}" class="btn btn-link text-secondary text-center mt-2" style="text-decoration: none;">
+                            Cancel and Go Back
+                        </a>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

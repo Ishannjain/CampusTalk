@@ -12,6 +12,7 @@ urlpatterns = [
     path('create-post/', views.create_post, name='create_post'),
     path('comment/<int:post_id>/', views.add_comment, name='add_comment'),
     path('common-chat/', views.common_chat, name='common_chat'),
+    path('inbox/', views.chat_list, name='inbox'),
     path('chat/<str:username>/', views.personal_chat, name='personal_chat'),
     
     path('edit-profile/', views.edit_profile, name='edit_profile'),
@@ -60,4 +61,4 @@ urlpatterns = [
     # Likes
     path('post/<int:post_id>/like/', views.toggle_post_like, name='toggle_post_like'),
     path('comment/<int:comment_id>/like/', views.toggle_comment_like, name='toggle_comment_like'),
-]
+]

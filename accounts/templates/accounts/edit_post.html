@@ -1,39 +1,60 @@
 {% extends "accounts/layout.html" %}
 {% block body %}
-<div class="container mt-5">
+<div class="container fade-in-up" style="margin-top: 50px; margin-bottom: 80px;">
     <div class="row justify-content-center">
         <div class="col-md-8">
-            <div class="card shadow">
-                <div class="card-header bg-warning text-dark text-center">
-                    <h3>Edit Post</h3>
+            <div class="glass-card p-5">
+                <div class="text-center mb-5">
+                    <div class="avatar-sm mx-auto mb-3" style="width: 70px; height: 70px; background: rgba(245, 158, 11, 0.1); font-size: 28px; color: #f59e0b;">
+                        <i class="fas fa-edit"></i>
+                    </div>
+                    <h3 class="font-weight-bold text-dark">Refine Your Post</h3>
+                    <p class="text-secondary small">Adjust the details of your share</p>
                 </div>
-                <div class="card-body">
-                    <form method="post" enctype="multipart/form-data">
-                        {% csrf_token %}
-                        <div class="form-group mb-3">
-                            <label for="{{ form.title.id_for_label }}" class="form-label">Title</label>
-                            {{ form.title }}
+
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="form-group mb-4">
+                        <label class="small font-weight-bold text-secondary mb-2" style="text-transform: uppercase; letter-spacing: 1px;">Title</label>
+                        {{ form.title }}
+                    </div>
+
+                    <div class="form-group mb-4">
+                        <label class="small font-weight-bold text-secondary mb-2" style="text-transform: uppercase; letter-spacing: 1px;">Content</label>
+                        {{ form.body }}
+                    </div>
+
+                    <div class="form-group mb-4">
+                        <label class="small font-weight-bold text-secondary mb-2" style="text-transform: uppercase; letter-spacing: 1px;">Post Image</label>
+                        
+                        {% if post.image %}
+                            <div class="mb-3 p-3 bg-light rounded-lg border text-center">
+                                <p class="small text-muted mb-2">Current Image</p>
+                                <img src="{{ post.image.url }}" alt="Current Image" class="rounded shadow-sm" style="max-width: 100%; max-height: 200px; object-fit: contain;">
+                            </div>
+                        {% endif %}
+
+                        <div class="mb-3" style="display: none;">
+                            <p class="small text-warning mb-2 font-weight-bold">New Preview</p>
+                            <img src="" class="img-upload-preview rounded shadow-sm" style="max-width: 100%; max-height: 200px; object-fit: contain; border: 2px solid #6366f1;">
                         </div>
-                        <div class="form-group mb-3">
-                            <label for="{{ form.body.id_for_label }}" class="form-label">Content</label>
-                            {{ form.body }}
+
+                        <div class="custom-file">
+                            <input type="file" name="image" id="edit-post-image" class="custom-file-input">
+                            <label class="custom-file-label" for="edit-post-image">{% if post.image %}Change Image{% else %}Choose Image{% endif %}</label>
                         </div>
-                        <div class="form-group mb-3">
-                            <label for="{{ form.image.id_for_label }}" class="form-label">Image</label>
-                            {% if post.image %}
-                                <div class="mb-2">
-                                    <img src="{{ post.image.url }}" alt="Current Image" style="max-width: 200px; display: block;">
-                                    <small class="text-muted">Currently: {{ post.image.name }}</small>
-                                </div>
-                            {% endif %}
-                            {{ form.image }}
-                        </div>
-                        <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-warning btn-lg">Update Post</button>
-                            <a href="{% url 'index' %}" class="btn btn-outline-secondary">Cancel</a>
-                        </div>
-                    </form>
-                </div>
+                    </div>
+
+                    <div class="d-flex flex-column gap-3 mt-5">
+                        <button type="submit" class="btn btn-primary btn-lg py-3" style="border-radius: 12px; font-weight: bold;">
+                            Update Post
+                        </button>
+                        <a href="{% url 'index' %}" class="btn btn-link text-secondary mt-2" style="text-decoration: none;">
+                            Discard Changes
+                        </a>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
