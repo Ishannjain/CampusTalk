@@ -1,0 +1,38 @@
+# Python compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Django generated files
+*.log
+*.pot
+*.pyc
+*.pyo
+*.pyd
+
+# SQLite database
+db.sqlite3
+*.sqlite3
+*.sqlite
+
+# Local environment files
+.env
+.env.*
+
+# IDE/editor folders
+.vscode/
+.idea/
+
+# macOS
+.DS_Store
+
+# Uploaded media/local images
+post_images/
+
+# Static file caches
+staticfiles/
+
+# Python virtual environments
+venv/
+ENV/
+env/
